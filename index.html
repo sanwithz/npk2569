@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="th">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ค้นหาและแสดงผลนักเรียน</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
+  <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet">
+  <style>
+body { font-family: 'DM Sans', sans-serif; background: linear-gradient(180deg, #eef6ff 0%, #fff7f7 100%); }
+mark { background: #bfdbfe; padding: 0 .15rem; border-radius: .25rem; }
+</style>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js" type="text/javascript"></script>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="/_sdk/resizing_sdk.js" type="text/javascript"></script>
+ </head>
+ <body data-template-id="__page-root" class="min-h-screen">
+  <div class="max-w-6xl mx-auto p-4 md:p-6">
+   <header class="mb-6">
+    <div class="flex items-center justify-between">
+     <h1 data-template-id="page-title" class="canva-text text-2xl md:text-3xl font-bold text-slate-800"></h1><button id="btn-refresh" class="px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-2xl font-medium transition"><i class="fa-solid fa-rotate-right mr-1"></i> รีเฟรช</button>
+    </div>
+    <p data-template-id="page-subtitle" class="canva-text text-slate-500 mt-1"></p>
+   </header><!-- Stats -->
+   <div class="grid grid-cols-3 gap-3 mb-5">
+    <div data-template-id="stat-total-card" class="canva-card bg-white rounded-2xl p-4 text-center shadow-sm">
+     <div id="stat-total" class="text-2xl font-bold text-blue-600">
+      0
+     </div>
+     <div data-template-id="stat-total-label" class="canva-text text-xs text-slate-500 mt-1"></div>
+    </div>
+    <div data-template-id="stat-classes-card" class="canva-card bg-white rounded-2xl p-4 text-center shadow-sm">
+     <div id="stat-classes" class="text-2xl font-bold text-rose-400">
+      0
+     </div>
+     <div data-template-id="stat-classes-label" class="canva-text text-xs text-slate-500 mt-1"></div>
+    </div>
+    <div data-template-id="stat-shown-card" class="canva-card bg-white rounded-2xl p-4 text-center shadow-sm">
+     <div id="stat-shown" class="text-2xl font-bold text-emerald-500">
+      0
+     </div>
+     <div data-template-id="stat-shown-label" class="canva-text text-xs text-slate-500 mt-1"></div>
+    </div>
+   </div><!-- Controls -->
+   <div class="bg-white rounded-2xl p-4 shadow-sm mb-5 space-y-3">
+    <div class="relative"><i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i> <input id="search-input" type="text" data-template-id="search-input" class="canva-input w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-200 text-sm">
+    </div>
+    <div class="flex flex-wrap gap-2"><select id="filter-class" class="flex-1 min-w-[140px] px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"> <option value="">ทั้งหมด</option> </select> <select id="sort-select" class="flex-1 min-w-[140px] px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"> <option value="เลขที่-asc">เลขที่ ↑</option> <option value="เลขที่-desc">เลขที่ ↓</option> <option value="ชื่อ - สกุล-asc">ชื่อ ก-ฮ</option> <option value="ชื่อ - สกุล-desc">ชื่อ ฮ-ก</option> <option value="ชั้น-asc">ชั้น ↑</option> <option value="ชั้น-desc">ชั้น ↓</option> </select>
+     <div class="flex border border-slate-200 rounded-xl overflow-hidden"><button id="view-cards" class="px-3 py-2 text-sm bg-blue-100 text-blue-700"><i class="fa-solid fa-grip"></i></button> <button id="view-table" class="px-3 py-2 text-sm text-slate-500 hover:bg-slate-50"><i class="fa-solid fa-table-list"></i></button>
+     </div>
+    </div>
+   </div><!-- Results -->
+   <div id="results-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+   <div id="results-table" class="hidden overflow-x-auto bg-white rounded-2xl shadow-sm">
+    <table class="w-full text-sm">
+     <thead class="bg-blue-50 text-slate-600">
+      <tr>
+       <th class="px-4 py-3 text-left">เลขที่</th>
+       <th class="px-4 py-3 text-left">รหัสประจำตัว</th>
+       <th class="px-4 py-3 text-left">ชื่อ - สกุล</th>
+       <th class="px-4 py-3 text-left">ชั้น</th>
+      </tr>
+     </thead>
+     <tbody id="table-body"></tbody>
+    </table>
+   </div>
+   <p id="empty-state" data-template-id="empty-state" class="canva-text hidden text-center text-slate-400 py-12 text-lg"></p><!-- Footer -->
+   <footer class="mt-8 border-t border-gray-200 py-4 text-center text-sm text-slate-500">
+    <p>© <span id="yr"></span> Copyright | พัฒนาโดยครูสิทธิชาติ สิทธิ <a href="https://www.facebook.com/SanwithzWebapp" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-facebook text-blue-500 hover:text-blue-700 ml-1"></i></a> <a href="https://www.youtube.com/@Sanwithz" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-youtube text-red-500 hover:text-red-700 ml-1"></i></a></p>
+   </footer>
+  </div>
+  <script src="/_sdk/editing_sdk.js"></script>
+  <script>
+document.getElementById('yr').textContent = new Date().getFullYear();
+
+const API_URL = 'https://script.google.com/macros/s/AKfycbzfGEORbRNgEA4epbj_ofkoZC2LhxlDs7bd4ZrdK9eN3tImu60UqwFNy2WohgOYRNdX/exec';
+const CACHE_KEY = 'student_data_cache';
+const CACHE_TTL = 30 * 60 * 1000;
+
+let allData = [];
+let currentView = 'cards';
+let debounceTimer;
+
+async function fetchData(force = false) {
+  if (!force) {
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
+      const { data, ts } = JSON.parse(cached);
+      if (Date.now() - ts < CACHE_TTL) { allData = data; render(); return; }
+    }
+  }
+  Swal.fire({ title: 'กำลังโหลดข้อมูล...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+  try {
+    const res = await fetch(API_URL);
+    if (!res.ok) throw new Error(res.statusText);
+    const json = await res.json();
+    allData = Array.isArray(json) ? json : (json.data || []);
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ data: allData, ts: Date.now() }));
+    Swal.close();
+    populateFilter();
+    render();
+  } catch (e) {
+    Swal.fire({ icon: 'error', title: 'โหลดข้อมูลไม่สำเร็จ', text: e.message });
+  }
+}
+
+function populateFilter() {
+  const classes = [...new Set(allData.map(d => d['ชั้น']).filter(Boolean))].sort();
+  const sel = document.getElementById('filter-class');
+  sel.innerHTML = '<option value="">ทั้งหมด</option>' + classes.map(c => `<option value="${c}">${c}</option>`).join('');
+}
+
+function getFiltered() {
+  const q = document.getElementById('search-input').value.trim().toLowerCase();
+  const cls = document.getElementById('filter-class').value;
+  let data = allData;
+  if (cls) data = data.filter(d => d['ชั้น'] === cls);
+  if (q) data = data.filter(d => ['เลขที่','รหัสประจำตัว','ชื่อ - สกุล','ชั้น'].some(k => String(d[k]||'').toLowerCase().includes(q)));
+  const [key, order] = (document.getElementById('sort-select').value || 'เลขที่-asc').split('-');
+  data.sort((a, b) => { const av = String(a[key]||''), bv = String(b[key]||''); return order === 'asc' ? av.localeCompare(bv, 'th', {numeric:true}) : bv.localeCompare(av, 'th', {numeric:true}); });
+  return data;
+}
+
+function hl(text, q) {
+  if (!q) return esc(text);
+  const s = esc(String(text||''));
+  const re = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
+  return s.replace(re, '<mark>$1</mark>');
+}
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+function render() {
+  const data = getFiltered();
+  const q = document.getElementById('search-input').value.trim().toLowerCase();
+  document.getElementById('stat-total').textContent = allData.length;
+  document.getElementById('stat-classes').textContent = new Set(allData.map(d=>d['ชั้น']).filter(Boolean)).size;
+  document.getElementById('stat-shown').textContent = data.length;
+
+  const empty = document.getElementById('empty-state');
+  empty.classList.toggle('hidden', data.length > 0);
+
+  if (currentView === 'cards') {
+    document.getElementById('results-cards').classList.remove('hidden');
+    document.getElementById('results-table').classList.add('hidden');
+    document.getElementById('results-cards').innerHTML = data.map(d => `
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 hover:shadow-md transition">
+        <div class="flex items-center gap-3 mb-2">
+          <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm">${esc(String(d['เลขที่']||''))}</div>
+          <div class="flex-1 min-w-0">
+            <div class="font-semibold text-slate-800 truncate">${hl(d['ชื่อ - สกุล'], q)}</div>
+            <div class="text-xs text-slate-400">${hl(d['รหัสประจำตัว'], q)}</div>
+          </div>
+        </div>
+        <span class="inline-block px-2 py-0.5 text-xs rounded-lg bg-blue-50 text-blue-600">${hl(d['ชั้น'], q)}</span>
+      </div>`).join('');
+  } else {
+    document.getElementById('results-cards').classList.add('hidden');
+    document.getElementById('results-table').classList.remove('hidden');
+    document.getElementById('table-body').innerHTML = data.map(d => `
+      <tr class="border-t border-slate-100 hover:bg-blue-50/30">
+        <td class="px-4 py-2">${hl(d['เลขที่'], q)}</td>
+        <td class="px-4 py-2">${hl(d['รหัสประจำตัว'], q)}</td>
+        <td class="px-4 py-2">${hl(d['ชื่อ - สกุล'], q)}</td>
+        <td class="px-4 py-2">${hl(d['ชั้น'], q)}</td>
+      </tr>`).join('');
+  }
+}
+
+document.getElementById('search-input').addEventListener('input', () => { clearTimeout(debounceTimer); debounceTimer = setTimeout(render, 250); });
+document.getElementById('filter-class').addEventListener('change', render);
+document.getElementById('sort-select').addEventListener('change', render);
+document.getElementById('btn-refresh').addEventListener('click', () => fetchData(true));
+
+document.getElementById('view-cards').addEventListener('click', () => { currentView='cards'; document.getElementById('view-cards').className='px-3 py-2 text-sm bg-blue-100 text-blue-700'; document.getElementById('view-table').className='px-3 py-2 text-sm text-slate-500 hover:bg-slate-50'; render(); });
+document.getElementById('view-table').addEventListener('click', () => { currentView='table'; document.getElementById('view-table').className='px-3 py-2 text-sm bg-blue-100 text-blue-700'; document.getElementById('view-cards').className='px-3 py-2 text-sm text-slate-500 hover:bg-slate-50'; render(); });
+
+fetchData();
+</script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9f86e4cef059731f',t:'MTc3ODIyNjgzOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
