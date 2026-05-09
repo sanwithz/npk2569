@@ -1,183 +1,1283 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="th">
- <head>
+<head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ค้นหาและแสดงผลนักเรียน</title>
+  <title>IAD SmartCare - Wound Management System</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
-  <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet">
-  <style>
-body { font-family: 'DM Sans', sans-serif; background: linear-gradient(180deg, #eef6ff 0%, #fff7f7 100%); }
-mark { background: #bfdbfe; padding: 0 .15rem; border-radius: .25rem; }
-</style>
-  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js" type="text/javascript"></script>
-  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
-  <script src="/_sdk/resizing_sdk.js" type="text/javascript"></script>
- </head>
- <body data-template-id="__page-root" class="min-h-screen">
-  <div class="max-w-6xl mx-auto p-4 md:p-6">
-   <header class="mb-6">
-    <div class="flex items-center justify-between">
-     <h1 data-template-id="page-title" class="canva-text text-2xl md:text-3xl font-bold text-slate-800"></h1><button id="btn-refresh" class="px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-2xl font-medium transition"><i class="fa-solid fa-rotate-right mr-1"></i> รีเฟรช</button>
-    </div>
-    <p data-template-id="page-subtitle" class="canva-text text-slate-500 mt-1"></p>
-   </header><!-- Stats -->
-   <div class="grid grid-cols-3 gap-3 mb-5">
-    <div data-template-id="stat-total-card" class="canva-card bg-white rounded-2xl p-4 text-center shadow-sm">
-     <div id="stat-total" class="text-2xl font-bold text-blue-600">
-      0
-     </div>
-     <div data-template-id="stat-total-label" class="canva-text text-xs text-slate-500 mt-1"></div>
-    </div>
-    <div data-template-id="stat-classes-card" class="canva-card bg-white rounded-2xl p-4 text-center shadow-sm">
-     <div id="stat-classes" class="text-2xl font-bold text-rose-400">
-      0
-     </div>
-     <div data-template-id="stat-classes-label" class="canva-text text-xs text-slate-500 mt-1"></div>
-    </div>
-    <div data-template-id="stat-shown-card" class="canva-card bg-white rounded-2xl p-4 text-center shadow-sm">
-     <div id="stat-shown" class="text-2xl font-bold text-emerald-500">
-      0
-     </div>
-     <div data-template-id="stat-shown-label" class="canva-text text-xs text-slate-500 mt-1"></div>
-    </div>
-   </div><!-- Controls -->
-   <div class="bg-white rounded-2xl p-4 shadow-sm mb-5 space-y-3">
-    <div class="relative"><i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i> <input id="search-input" type="text" data-template-id="search-input" class="canva-input w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-200 text-sm">
-    </div>
-    <div class="flex flex-wrap gap-2"><select id="filter-class" class="flex-1 min-w-[140px] px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"> <option value="">ทั้งหมด</option> </select> <select id="sort-select" class="flex-1 min-w-[140px] px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"> <option value="เลขที่-asc">เลขที่ ↑</option> <option value="เลขที่-desc">เลขที่ ↓</option> <option value="ชื่อ - สกุล-asc">ชื่อ ก-ฮ</option> <option value="ชื่อ - สกุล-desc">ชื่อ ฮ-ก</option> <option value="ชั้น-asc">ชั้น ↑</option> <option value="ชั้น-desc">ชั้น ↓</option> </select>
-     <div class="flex border border-slate-200 rounded-xl overflow-hidden"><button id="view-cards" class="px-3 py-2 text-sm bg-blue-100 text-blue-700"><i class="fa-solid fa-grip"></i></button> <button id="view-table" class="px-3 py-2 text-sm text-slate-500 hover:bg-slate-50"><i class="fa-solid fa-table-list"></i></button>
-     </div>
-    </div>
-   </div><!-- Results -->
-   <div id="results-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
-   <div id="results-table" class="hidden overflow-x-auto bg-white rounded-2xl shadow-sm">
-    <table class="w-full text-sm">
-     <thead class="bg-blue-50 text-slate-600">
-      <tr>
-       <th class="px-4 py-3 text-left">เลขที่</th>
-       <th class="px-4 py-3 text-left">รหัสประจำตัว</th>
-       <th class="px-4 py-3 text-left">ชื่อ - สกุล</th>
-       <th class="px-4 py-3 text-left">ชั้น</th>
-      </tr>
-     </thead>
-     <tbody id="table-body"></tbody>
-    </table>
-   </div>
-   <p id="empty-state" data-template-id="empty-state" class="canva-text hidden text-center text-slate-400 py-12 text-lg"></p><!-- Footer -->
-   <footer class="mt-8 border-t border-gray-200 py-4 text-center text-sm text-slate-500">
-    <p>© <span id="yr"></span> Copyright | พัฒนาโดยครูสิทธิชาติ สิทธิ <a href="https://www.facebook.com/SanwithzWebapp" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-facebook text-blue-500 hover:text-blue-700 ml-1"></i></a> <a href="https://www.youtube.com/@Sanwithz" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-youtube text-red-500 hover:text-red-700 ml-1"></i></a></p>
-   </footer>
-  </div>
-  <script src="/_sdk/editing_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <script>
-document.getElementById('yr').textContent = new Date().getFullYear();
-
-const API_URL = 'https://script.google.com/macros/s/AKfycbzfGEORbRNgEA4epbj_ofkoZC2LhxlDs7bd4ZrdK9eN3tImu60UqwFNy2WohgOYRNdX/exec';
-const CACHE_KEY = 'student_data_cache';
-const CACHE_TTL = 30 * 60 * 1000;
-
-let allData = [];
-let currentView = 'cards';
-let debounceTimer;
-
-async function fetchData(force = false) {
-  if (!force) {
-    const cached = localStorage.getItem(CACHE_KEY);
-    if (cached) {
-      const { data, ts } = JSON.parse(cached);
-      if (Date.now() - ts < CACHE_TTL) { allData = data; render(); return; }
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: { 50:'#f0fdf4', 100:'#dcfce7', 200:'#bbf7d0', 300:'#86efac', 400:'#4ade80', 500:'#22c55e', 600:'#16a34a', 700:'#15803d', 800:'#166534', 900:'#14532d' },
+            mild: { light:'#f0fdf4', border:'#86efac', text:'#15803d', badge:'#dcfce7' },
+            moderate: { light:'#fffbeb', border:'#fcd34d', text:'#d97706', badge:'#fef3c7' },
+            severe: { light:'#fff1f2', border:'#fca5a5', text:'#dc2626', badge:'#fee2e2' }
+          },
+          fontFamily: { sarabun: ['Sarabun', 'sans-serif'] }
+        }
+      }
     }
-  }
-  Swal.fire({ title: 'กำลังโหลดข้อมูล...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-  try {
-    const res = await fetch(API_URL);
-    if (!res.ok) throw new Error(res.statusText);
-    const json = await res.json();
-    allData = Array.isArray(json) ? json : (json.data || []);
-    localStorage.setItem(CACHE_KEY, JSON.stringify({ data: allData, ts: Date.now() }));
-    Swal.close();
-    populateFilter();
-    render();
-  } catch (e) {
-    Swal.fire({ icon: 'error', title: 'โหลดข้อมูลไม่สำเร็จ', text: e.message });
-  }
-}
+  </script>
+  <style>
+    * { font-family: 'Sarabun', sans-serif; }
+    body { background: #f1f5f1; }
 
-function populateFilter() {
-  const classes = [...new Set(allData.map(d => d['ชั้น']).filter(Boolean))].sort();
-  const sel = document.getElementById('filter-class');
-  sel.innerHTML = '<option value="">ทั้งหมด</option>' + classes.map(c => `<option value="${c}">${c}</option>`).join('');
-}
+    /* Sidebar */
+    .sidebar { width: 240px; min-height: 100vh; background: #1a3a2a; }
+    .sidebar-logo { background: #0f2318; }
+    .nav-item { transition: all .2s; border-radius: 10px; margin: 2px 8px; }
+    .nav-item:hover, .nav-item.active { background: rgba(34,197,94,.15); color: #4ade80; }
+    .nav-item.active { background: rgba(34,197,94,.2); border-left: 3px solid #22c55e; }
 
-function getFiltered() {
-  const q = document.getElementById('search-input').value.trim().toLowerCase();
-  const cls = document.getElementById('filter-class').value;
-  let data = allData;
-  if (cls) data = data.filter(d => d['ชั้น'] === cls);
-  if (q) data = data.filter(d => ['เลขที่','รหัสประจำตัว','ชื่อ - สกุล','ชั้น'].some(k => String(d[k]||'').toLowerCase().includes(q)));
-  const [key, order] = (document.getElementById('sort-select').value || 'เลขที่-asc').split('-');
-  data.sort((a, b) => { const av = String(a[key]||''), bv = String(b[key]||''); return order === 'asc' ? av.localeCompare(bv, 'th', {numeric:true}) : bv.localeCompare(av, 'th', {numeric:true}); });
-  return data;
-}
+    /* Cards */
+    .card { background: white; border-radius: 16px; box-shadow: 0 1px 6px rgba(0,0,0,.07); }
+    .card-hover { transition: box-shadow .2s; }
+    .card-hover:hover { box-shadow: 0 4px 16px rgba(0,0,0,.12); }
 
-function hl(text, q) {
-  if (!q) return esc(text);
-  const s = esc(String(text||''));
-  const re = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
-  return s.replace(re, '<mark>$1</mark>');
-}
-function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+    /* Severity Buttons */
+    .sev-btn { border: 2px solid #e5e7eb; border-radius: 10px; cursor: pointer; transition: all .2s; background: white; }
+    .sev-btn.mild-active { border-color: #16a34a; background: #f0fdf4; color: #15803d; }
+    .sev-btn.moderate-active { border-color: #d97706; background: #fffbeb; color: #92400e; }
+    .sev-btn.severe-active { border-color: #dc2626; background: #fff1f2; color: #991b1b; }
 
-function render() {
-  const data = getFiltered();
-  const q = document.getElementById('search-input').value.trim().toLowerCase();
-  document.getElementById('stat-total').textContent = allData.length;
-  document.getElementById('stat-classes').textContent = new Set(allData.map(d=>d['ชั้น']).filter(Boolean)).size;
-  document.getElementById('stat-shown').textContent = data.length;
+    /* Modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 999; display: none; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
+    .modal-overlay.show { display: flex; }
+    .modal-box { background: white; border-radius: 20px; max-width: 860px; width: 95%; max-height: 90vh; overflow-y: auto; position: relative; animation: slideUp .3s ease; }
+    .modal-box-sm { max-width: 460px; }
+    @keyframes slideUp { from { opacity:0; transform: translateY(30px); } to { opacity:1; transform: translateY(0); } }
 
-  const empty = document.getElementById('empty-state');
-  empty.classList.toggle('hidden', data.length > 0);
+    /* Severity Cards in Modal */
+    .sev-card { border-radius: 14px; padding: 20px; }
+    .sev-card.mild { background: #f0fdf4; border: 1.5px solid #86efac; }
+    .sev-card.moderate { background: #fffbeb; border: 1.5px solid #fcd34d; }
+    .sev-card.severe { background: #fff1f2; border: 1.5px solid #fca5a5; }
 
-  if (currentView === 'cards') {
-    document.getElementById('results-cards').classList.remove('hidden');
-    document.getElementById('results-table').classList.add('hidden');
-    document.getElementById('results-cards').innerHTML = data.map(d => `
-      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 hover:shadow-md transition">
-        <div class="flex items-center gap-3 mb-2">
-          <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm">${esc(String(d['เลขที่']||''))}</div>
-          <div class="flex-1 min-w-0">
-            <div class="font-semibold text-slate-800 truncate">${hl(d['ชื่อ - สกุล'], q)}</div>
-            <div class="text-xs text-slate-400">${hl(d['รหัสประจำตัว'], q)}</div>
+    /* Checkbox custom */
+    .custom-check { width: 20px; height: 20px; accent-color: #16a34a; cursor: pointer; }
+
+    /* Skin illustration placeholder */
+    .skin-img { width: 100px; height: 80px; border-radius: 12px; object-fit: cover; }
+
+    /* Status badges */
+    .badge-mild { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+    .badge-moderate { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+    .badge-severe { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+
+    /* Mobile nav */
+    .mobile-nav { display: none; }
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .mobile-nav { display: flex; }
+      .main-layout { margin-left: 0 !important; }
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+
+    /* Input focus */
+    input:focus, select:focus, textarea:focus { outline: none; border-color: #16a34a !important; box-shadow: 0 0 0 3px rgba(22,163,74,.1); }
+
+    /* Page sections */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* Stats card gradient */
+    .stat-green { background: linear-gradient(135deg, #16a34a, #22c55e); }
+    .stat-orange { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    .stat-red { background: linear-gradient(135deg, #dc2626, #ef4444); }
+    .stat-blue { background: linear-gradient(135deg, #2563eb, #3b82f6); }
+
+    /* Table */
+    table { border-collapse: collapse; width: 100%; }
+    th { background: #f8faf8; font-weight: 600; color: #374151; }
+    tr:hover td { background: #f9fafb; }
+
+    /* Animate fade in */
+    .fade-in { animation: fadeIn .3s ease; }
+    @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+
+    /* Goal box */
+    .goal-box { background: #fffbeb; border: 1.5px solid #fcd34d; border-radius: 12px; padding: 12px 16px; }
+    .goal-box.green { background: #f0fdf4; border-color: #86efac; }
+    .goal-box.red { background: #fff1f2; border-color: #fca5a5; }
+
+    /* Skin SVG illustrations inline */
+    .skin-mild { background: linear-gradient(135deg, #fecaca, #fda4af); }
+    .skin-moderate { background: linear-gradient(135deg, #fed7aa, #fb923c); }
+    .skin-severe { background: linear-gradient(135deg, #f87171, #dc2626); }
+
+    /* Principle icons */
+    .principle-icon { width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+
+    /* Photo upload */
+    .photo-upload { border: 2px dashed #d1d5db; border-radius: 12px; cursor: pointer; transition: all .2s; }
+    .photo-upload:hover { border-color: #16a34a; background: #f0fdf4; }
+
+    .severity-detail-card { border-radius: 16px; padding: 24px; }
+  </style>
+</head>
+<body class="min-h-screen">
+
+<!-- ============================================ -->
+<!--  SIDEBAR (Desktop)                          -->
+<!-- ============================================ -->
+<div class="flex">
+<aside class="sidebar fixed top-0 left-0 flex flex-col z-50">
+  <!-- Logo -->
+  <div class="sidebar-logo p-5 flex items-center gap-3">
+    <div class="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center">
+      <i class="fas fa-shield-halved text-white text-lg"></i>
+    </div>
+    <div>
+      <div class="text-white font-bold text-base leading-tight">IAD SmartCare</div>
+      <div class="text-green-400 text-xs">Wound Management System</div>
+    </div>
+  </div>
+
+  <!-- Nav -->
+  <nav class="flex-1 py-4 space-y-1">
+    <div class="nav-item active flex items-center gap-3 px-4 py-3 text-white cursor-pointer" onclick="switchPage('dashboard')">
+      <i class="fas fa-house w-5 text-center"></i><span class="text-sm font-medium">หน้าหลัก</span>
+    </div>
+    <div class="nav-item flex items-center gap-3 px-4 py-3 text-gray-400 cursor-pointer" onclick="switchPage('assess')">
+      <i class="fas fa-user-check w-5 text-center"></i><span class="text-sm font-medium">ประเมินผู้ป่วย</span>
+    </div>
+    <div class="nav-item flex items-center gap-3 px-4 py-3 text-gray-400 cursor-pointer" onclick="switchPage('track')">
+      <i class="fas fa-chart-line w-5 text-center"></i><span class="text-sm font-medium">ติดตามแผล</span>
+    </div>
+    <div class="nav-item flex items-center gap-3 px-4 py-3 text-gray-400 cursor-pointer" onclick="switchPage('report')">
+      <i class="fas fa-file-medical w-5 text-center"></i><span class="text-sm font-medium">รายงาน</span>
+    </div>
+    <div class="nav-item flex items-center gap-3 px-4 py-3 text-gray-400 cursor-pointer" onclick="switchPage('guideline')">
+      <i class="fas fa-book-medical w-5 text-center"></i><span class="text-sm font-medium">แนวทางการรักษา</span>
+    </div>
+    <div class="nav-item flex items-center gap-3 px-4 py-3 text-gray-400 cursor-pointer" onclick="switchPage('users')">
+      <i class="fas fa-users w-5 text-center"></i><span class="text-sm font-medium">ผู้ใช้งาน</span>
+    </div>
+    <div class="nav-item flex items-center gap-3 px-4 py-3 text-gray-400 cursor-pointer" onclick="switchPage('settings')">
+      <i class="fas fa-gear w-5 text-center"></i><span class="text-sm font-medium">ตั้งค่า</span>
+    </div>
+  </nav>
+
+  <!-- User -->
+  <div class="p-4 border-t border-green-900">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 bg-green-500 rounded-full flex items-center justify-center">
+        <i class="fas fa-user-nurse text-white text-sm"></i>
+      </div>
+      <div class="flex-1 min-w-0">
+        <div class="text-white text-sm font-medium truncate">พยาบาล ณัฐริดา</div>
+        <div class="text-green-400 text-xs">Ward 3A</div>
+      </div>
+      <button class="text-gray-400 hover:text-red-400 transition" title="ออกจากระบบ">
+        <i class="fas fa-right-from-bracket text-sm"></i>
+      </button>
+    </div>
+  </div>
+</aside>
+
+<!-- ============================================ -->
+<!--  MAIN CONTENT                               -->
+<!-- ============================================ -->
+<main class="main-layout flex-1 min-h-screen" style="margin-left:240px;">
+
+  <!-- TOP BAR -->
+  <header class="bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between sticky top-0 z-40">
+    <div class="flex items-center gap-3">
+      <!-- mobile menu -->
+      <button class="md:hidden text-gray-600 text-xl mr-2" onclick="toggleMobileMenu()"><i class="fas fa-bars"></i></button>
+      <div>
+        <h1 id="page-title" class="text-lg font-bold text-gray-800">หน้าหลัก</h1>
+        <p class="text-xs text-gray-500">IAD SmartCare · Wound Management System</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="text-sm text-gray-500 hidden sm:block">
+        <i class="far fa-calendar-alt mr-1"></i> 25 พ.ค. 2567
+      </div>
+      <button class="relative p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-xl transition">
+        <i class="fas fa-bell text-lg"></i>
+        <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+      </button>
+      <div class="w-9 h-9 bg-green-600 rounded-xl flex items-center justify-center">
+        <i class="fas fa-user-nurse text-white text-sm"></i>
+      </div>
+    </div>
+  </header>
+
+  <!-- PAGE CONTENT -->
+  <div class="p-6">
+
+    <!-- ====== PAGE: DASHBOARD ====== -->
+    <div id="page-dashboard" class="page active fade-in">
+      <!-- Stats -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="stat-green card p-5 text-white">
+          <div class="text-3xl font-bold">24</div>
+          <div class="text-sm opacity-90 mt-1">ผู้ป่วยทั้งหมด</div>
+          <div class="text-xs opacity-70 mt-2"><i class="fas fa-arrow-up mr-1"></i>+3 วันนี้</div>
+        </div>
+        <div class="stat-orange card p-5 text-white">
+          <div class="text-3xl font-bold">8</div>
+          <div class="text-sm opacity-90 mt-1">ระดับ Moderate</div>
+          <div class="text-xs opacity-70 mt-2"><i class="fas fa-minus mr-1"></i>คงที่</div>
+        </div>
+        <div class="stat-red card p-5 text-white">
+          <div class="text-3xl font-bold">3</div>
+          <div class="text-sm opacity-90 mt-1">ระดับ Severe</div>
+          <div class="text-xs opacity-70 mt-2"><i class="fas fa-arrow-down mr-1"></i>-1 จากเมื่อวาน</div>
+        </div>
+        <div class="stat-blue card p-5 text-white">
+          <div class="text-3xl font-bold">13</div>
+          <div class="text-sm opacity-90 mt-1">ประเมินวันนี้</div>
+          <div class="text-xs opacity-70 mt-2"><i class="fas fa-clock mr-1"></i>อัพเดตล่าสุด 09:00</div>
+        </div>
+      </div>
+
+      <div class="grid lg:grid-cols-3 gap-6">
+        <!-- Patient List -->
+        <div class="lg:col-span-2 card p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="font-bold text-gray-800 text-base">รายการผู้ป่วย IAD</h2>
+            <button class="text-sm text-green-600 font-medium hover:underline" onclick="switchPage('assess')">ดูทั้งหมด →</button>
+          </div>
+          <div class="overflow-x-auto">
+            <table>
+              <thead>
+                <tr>
+                  <th class="text-left text-xs px-3 py-3 rounded-l-lg">ผู้ป่วย</th>
+                  <th class="text-left text-xs px-3 py-3">Ward/เตียง</th>
+                  <th class="text-left text-xs px-3 py-3">ระดับ IAD</th>
+                  <th class="text-left text-xs px-3 py-3">ประเมินล่าสุด</th>
+                  <th class="text-left text-xs px-3 py-3 rounded-r-lg">จัดการ</th>
+                </tr>
+              </thead>
+              <tbody class="text-sm">
+                <tr class="border-t border-gray-50">
+                  <td class="px-3 py-3">
+                    <div class="flex items-center gap-2">
+                      <div class="w-8 h-8 bg-rose-100 rounded-full flex items-center justify-center"><i class="fas fa-user text-rose-400 text-xs"></i></div>
+                      <div><div class="font-medium text-gray-800">นางสาวสมใจ ใจดี</div><div class="text-xs text-gray-400">HN: 12345678</div></div>
+                    </div>
+                  </td>
+                  <td class="px-3 py-3 text-gray-600">Ward 3A / 15</td>
+                  <td class="px-3 py-3"><span class="badge-mild text-xs px-2 py-1 rounded-full font-medium">Mild</span></td>
+                  <td class="px-3 py-3 text-gray-500 text-xs">24 พ.ค. 09:00</td>
+                  <td class="px-3 py-3">
+                    <button class="text-green-600 hover:bg-green-50 px-3 py-1 rounded-lg text-xs font-medium transition" onclick="openAssessForm()">ประเมิน</button>
+                  </td>
+                </tr>
+                <tr class="border-t border-gray-50">
+                  <td class="px-3 py-3">
+                    <div class="flex items-center gap-2">
+                      <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center"><i class="fas fa-user text-blue-400 text-xs"></i></div>
+                      <div><div class="font-medium text-gray-800">นายสมชาย มีสุข</div><div class="text-xs text-gray-400">HN: 12345679</div></div>
+                    </div>
+                  </td>
+                  <td class="px-3 py-3 text-gray-600">Ward 3A / 12</td>
+                  <td class="px-3 py-3"><span class="badge-moderate text-xs px-2 py-1 rounded-full font-medium">Moderate</span></td>
+                  <td class="px-3 py-3 text-gray-500 text-xs">24 พ.ค. 10:30</td>
+                  <td class="px-3 py-3">
+                    <button class="text-green-600 hover:bg-green-50 px-3 py-1 rounded-lg text-xs font-medium transition" onclick="openAssessForm()">ประเมิน</button>
+                  </td>
+                </tr>
+                <tr class="border-t border-gray-50">
+                  <td class="px-3 py-3">
+                    <div class="flex items-center gap-2">
+                      <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center"><i class="fas fa-user text-purple-400 text-xs"></i></div>
+                      <div><div class="font-medium text-gray-800">นางวิไล รักดี</div><div class="text-xs text-gray-400">HN: 12345680</div></div>
+                    </div>
+                  </td>
+                  <td class="px-3 py-3 text-gray-600">Ward 3B / 08</td>
+                  <td class="px-3 py-3"><span class="badge-severe text-xs px-2 py-1 rounded-full font-medium">Severe</span></td>
+                  <td class="px-3 py-3 text-gray-500 text-xs">24 พ.ค. 08:15</td>
+                  <td class="px-3 py-3">
+                    <button class="text-green-600 hover:bg-green-50 px-3 py-1 rounded-lg text-xs font-medium transition" onclick="openAssessForm()">ประเมิน</button>
+                  </td>
+                </tr>
+                <tr class="border-t border-gray-50">
+                  <td class="px-3 py-3">
+                    <div class="flex items-center gap-2">
+                      <div class="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center"><i class="fas fa-user text-amber-400 text-xs"></i></div>
+                      <div><div class="font-medium text-gray-800">นายประสิทธิ์ ดีงาม</div><div class="text-xs text-gray-400">HN: 12345681</div></div>
+                    </div>
+                  </td>
+                  <td class="px-3 py-3 text-gray-600">Ward 2A / 21</td>
+                  <td class="px-3 py-3"><span class="badge-mild text-xs px-2 py-1 rounded-full font-medium">Mild</span></td>
+                  <td class="px-3 py-3 text-gray-500 text-xs">23 พ.ค. 14:00</td>
+                  <td class="px-3 py-3">
+                    <button class="text-green-600 hover:bg-green-50 px-3 py-1 rounded-lg text-xs font-medium transition" onclick="openAssessForm()">ประเมิน</button>
+                  </td>
+                </tr>
+                <tr class="border-t border-gray-50">
+                  <td class="px-3 py-3">
+                    <div class="flex items-center gap-2">
+                      <div class="w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center"><i class="fas fa-user text-teal-400 text-xs"></i></div>
+                      <div><div class="font-medium text-gray-800">นางสาวอรุณี แสงดาว</div><div class="text-xs text-gray-400">HN: 12345682</div></div>
+                    </div>
+                  </td>
+                  <td class="px-3 py-3 text-gray-600">Ward 2B / 05</td>
+                  <td class="px-3 py-3"><span class="badge-moderate text-xs px-2 py-1 rounded-full font-medium">Moderate</span></td>
+                  <td class="px-3 py-3 text-gray-500 text-xs">25 พ.ค. 07:45</td>
+                  <td class="px-3 py-3">
+                    <button class="text-green-600 hover:bg-green-50 px-3 py-1 rounded-lg text-xs font-medium transition" onclick="openAssessForm()">ประเมิน</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
-        <span class="inline-block px-2 py-0.5 text-xs rounded-lg bg-blue-50 text-blue-600">${hl(d['ชั้น'], q)}</span>
-      </div>`).join('');
-  } else {
-    document.getElementById('results-cards').classList.add('hidden');
-    document.getElementById('results-table').classList.remove('hidden');
-    document.getElementById('table-body').innerHTML = data.map(d => `
-      <tr class="border-t border-slate-100 hover:bg-blue-50/30">
-        <td class="px-4 py-2">${hl(d['เลขที่'], q)}</td>
-        <td class="px-4 py-2">${hl(d['รหัสประจำตัว'], q)}</td>
-        <td class="px-4 py-2">${hl(d['ชื่อ - สกุล'], q)}</td>
-        <td class="px-4 py-2">${hl(d['ชั้น'], q)}</td>
-      </tr>`).join('');
+
+        <!-- Right panel -->
+        <div class="space-y-4">
+          <!-- Quick action -->
+          <div class="card p-5">
+            <h3 class="font-bold text-gray-800 mb-3">ดำเนินการด่วน</h3>
+            <button onclick="openAssessForm()" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl text-sm font-medium transition mb-2 flex items-center justify-center gap-2">
+              <i class="fas fa-plus-circle"></i> ประเมิน IAD ใหม่
+            </button>
+            <button onclick="openGuidelineModal()" class="w-full border border-green-600 text-green-600 hover:bg-green-50 py-3 rounded-xl text-sm font-medium transition flex items-center justify-center gap-2">
+              <i class="fas fa-book-medical"></i> ดูแนวทางการรักษา
+            </button>
+          </div>
+
+          <!-- Severity distribution -->
+          <div class="card p-5">
+            <h3 class="font-bold text-gray-800 mb-4">การกระจายระดับความรุนแรง</h3>
+            <div class="space-y-3">
+              <div>
+                <div class="flex justify-between text-sm mb-1"><span class="text-green-700 font-medium">Mild</span><span class="text-gray-500">13 คน (54%)</span></div>
+                <div class="h-2 bg-gray-100 rounded-full"><div class="h-2 bg-green-500 rounded-full" style="width:54%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm mb-1"><span class="text-amber-700 font-medium">Moderate</span><span class="text-gray-500">8 คน (33%)</span></div>
+                <div class="h-2 bg-gray-100 rounded-full"><div class="h-2 bg-amber-500 rounded-full" style="width:33%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm mb-1"><span class="text-red-700 font-medium">Severe</span><span class="text-gray-500">3 คน (13%)</span></div>
+                <div class="h-2 bg-gray-100 rounded-full"><div class="h-2 bg-red-500 rounded-full" style="width:13%"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Alert -->
+          <div class="card p-5 border-l-4 border-red-500">
+            <div class="flex items-start gap-3">
+              <div class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-triangle-exclamation text-red-500 text-sm"></i>
+              </div>
+              <div>
+                <div class="font-semibold text-gray-800 text-sm">แจ้งเตือน</div>
+                <div class="text-xs text-gray-500 mt-1">นางวิไล รักดี ระดับ Severe ต้องได้รับการรักษาด่วน</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== PAGE: ASSESS (ประเมิน IAD รายวัน) ====== -->
+    <div id="page-assess" class="page fade-in">
+      <!-- Patient header -->
+      <div class="card p-5 mb-6">
+        <div class="flex flex-wrap items-center gap-4">
+          <div class="w-14 h-14 bg-rose-100 rounded-full flex items-center justify-center flex-shrink-0">
+            <i class="fas fa-user text-rose-400 text-xl"></i>
+          </div>
+          <div class="flex-1">
+            <div class="flex items-center gap-3 flex-wrap">
+              <h2 class="text-xl font-bold text-gray-800">นางสาวสมใจ ใจดี</h2>
+              <button onclick="openGuidelineModal()" class="bg-green-600 hover:bg-green-700 text-white text-xs px-4 py-2 rounded-lg font-medium transition flex items-center gap-1.5">
+                <i class="fas fa-book-medical"></i> แนวทางการรักษา IAD
+              </button>
+            </div>
+            <div class="text-sm text-gray-500 mt-1">HN : 12345678 &nbsp;|&nbsp; อายุ 72 ปี &nbsp;|&nbsp; เพศ : หญิง</div>
+          </div>
+          <div class="flex gap-6 text-center">
+            <div>
+              <div class="flex items-center gap-1 text-gray-500 text-xs mb-1"><i class="fas fa-door-open text-green-500 text-xs"></i> หอผู้ป่วย</div>
+              <div class="font-bold text-gray-800">Ward 3A</div>
+            </div>
+            <div>
+              <div class="flex items-center gap-1 text-gray-500 text-xs mb-1"><i class="fas fa-bed text-green-500 text-xs"></i> เตียง</div>
+              <div class="font-bold text-gray-800">15</div>
+            </div>
+            <div>
+              <div class="flex items-center gap-1 text-gray-500 text-xs mb-1"><i class="fas fa-stethoscope text-green-500 text-xs"></i> การวินิจฉัย</div>
+              <div class="font-bold text-gray-800">Stroke</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid lg:grid-cols-3 gap-6">
+        <!-- Assessment Form -->
+        <div class="lg:col-span-2">
+          <div class="card p-6">
+            <div class="flex items-center justify-between mb-5">
+              <h3 class="font-bold text-gray-800">ข้อมูลการประเมิน</h3>
+              <div class="flex items-center gap-2 text-sm text-gray-500">
+                <i class="far fa-calendar-alt text-green-500"></i>
+                <span>25 พ.ค. 2567</span>
+              </div>
+            </div>
+
+            <!-- 1. Location -->
+            <div class="mb-5">
+              <label class="block text-sm font-semibold text-gray-700 mb-2">1. บริเวณที่พบรอยโรค</label>
+              <select class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 bg-white">
+                <option>ก้นบน / รอบทวารหนัก</option>
+                <option>ขาหนีบ / ต้นขา</option>
+                <option>อวัยวะเพศ</option>
+                <option>บริเวณอื่นๆ</option>
+              </select>
+            </div>
+
+            <!-- 2. Severity -->
+            <div class="mb-5">
+              <label class="block text-sm font-semibold text-gray-700 mb-3">2. ระดับความรุนแรง (IAD Severity)</label>
+              <div class="grid grid-cols-3 gap-3">
+                <button class="sev-btn mild-active py-3 px-2 text-center" onclick="selectSeverity('mild', this)">
+                  <div class="font-bold text-lg">Mild</div>
+                  <div class="text-xs mt-1 opacity-75">ผิวหนังแดง</div>
+                </button>
+                <button class="sev-btn py-3 px-2 text-center text-gray-500" onclick="selectSeverity('moderate', this)">
+                  <div class="font-bold text-lg">Moderate</div>
+                  <div class="text-xs mt-1 opacity-75">มีรอยถลอก</div>
+                </button>
+                <button class="sev-btn py-3 px-2 text-center text-gray-500" onclick="selectSeverity('severe', this)">
+                  <div class="font-bold text-lg">Severe</div>
+                  <div class="text-xs mt-1 opacity-75">แผลลึก/ติดเชื้อ</div>
+                </button>
+              </div>
+            </div>
+
+            <!-- 3. Skin characteristics -->
+            <div class="mb-5">
+              <label class="block text-sm font-semibold text-gray-700 mb-2">3. ลักษณะผิวหนัง</label>
+              <input type="text" value="ผิวหนังแดง ขึ้น ไม่มีแผลเปิด" class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700">
+            </div>
+
+            <!-- 4. Risk factors -->
+            <div class="mb-5">
+              <label class="block text-sm font-semibold text-gray-700 mb-3">4. ปัจจัยเสี่ยงที่เกี่ยวข้อง</label>
+              <div class="grid grid-cols-2 gap-3">
+                <label class="flex items-center gap-2 cursor-pointer p-3 rounded-xl border border-gray-100 hover:bg-gray-50 transition">
+                  <input type="checkbox" class="custom-check" checked>
+                  <span class="text-sm text-gray-700">อุจจาระเหลว</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer p-3 rounded-xl border border-gray-100 hover:bg-gray-50 transition">
+                  <input type="checkbox" class="custom-check" checked>
+                  <span class="text-sm text-gray-700">ปัสสาวะเล็ด</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer p-3 rounded-xl border border-gray-100 hover:bg-gray-50 transition">
+                  <input type="checkbox" class="custom-check">
+                  <span class="text-sm text-gray-700">การเสียดสี</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer p-3 rounded-xl border border-gray-100 hover:bg-gray-50 transition">
+                  <input type="checkbox" class="custom-check">
+                  <span class="text-sm text-gray-700">การติดเชื้อรา</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- 5. Today's care -->
+            <div class="mb-5">
+              <label class="block text-sm font-semibold text-gray-700 mb-2">5. การดูแลที่ทำในวันนี้</label>
+              <select class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 bg-white">
+                <option>ทำความสะอาดด้วยน้ำเปล่าและซับให้แห้ง ทาครีมกันความชื้น (Zinc Oxide)</option>
+                <option>ทาครีมป้องกันผิว Barrier cream</option>
+                <option>เปลี่ยนผ้าอ้อม/แผ่นรองซับบ่อยขึ้น</option>
+                <option>ปรึกษาแพทย์เพื่อพิจารณาการรักษา</option>
+              </select>
+            </div>
+
+            <!-- 6. Photos -->
+            <div class="mb-6">
+              <label class="block text-sm font-semibold text-gray-700 mb-3">6. แนบรูปภาพแผล</label>
+              <div class="flex gap-3 flex-wrap">
+                <div class="w-24 h-24 rounded-xl overflow-hidden bg-gray-100 flex items-center justify-center">
+                  <!-- Mock wound photo -->
+                  <div class="w-full h-full bg-gradient-to-br from-rose-200 to-rose-300 flex items-center justify-center">
+                    <i class="fas fa-image text-rose-400 text-2xl"></i>
+                  </div>
+                </div>
+                <button class="photo-upload w-24 h-24 rounded-xl flex flex-col items-center justify-center gap-1 text-gray-400">
+                  <i class="fas fa-plus text-2xl"></i>
+                  <span class="text-xs">เพิ่มรูปภาพ</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Notes -->
+            <div class="mb-6">
+              <label class="block text-sm font-semibold text-gray-700 mb-2">หมายเหตุ</label>
+              <textarea rows="3" placeholder="ระบุหมายเหตุ (ถ้ามี)" class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 resize-none"></textarea>
+            </div>
+
+            <!-- Submit -->
+            <div class="flex gap-3">
+              <button onclick="showSaveSuccess()" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-semibold transition flex items-center justify-center gap-2">
+                <i class="fas fa-floppy-disk"></i> บันทึกข้อมูล
+              </button>
+              <button onclick="openSeverityGuide(currentSeverity)" class="px-5 border border-green-600 text-green-600 hover:bg-green-50 rounded-xl font-medium transition flex items-center gap-2">
+                <i class="fas fa-lightbulb"></i> แนวทาง
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: History -->
+        <div class="space-y-4">
+          <div class="card p-5">
+            <h3 class="font-bold text-gray-800 mb-4">ประวัติการประเมินล่าสุด</h3>
+            <div class="space-y-3">
+              <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                <div class="flex-1">
+                  <div class="text-sm font-medium text-gray-700">24 พ.ค. 2567 09:00 น.</div>
+                  <div class="text-xs text-gray-500 mt-0.5">ประเมินโดย พยาบาล ณัฐริดา</div>
+                </div>
+                <span class="badge-mild text-xs px-2 py-1 rounded-full font-medium">Mild</span>
+              </div>
+              <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                <div class="flex-1">
+                  <div class="text-sm font-medium text-gray-700">23 พ.ค. 2567 14:00 น.</div>
+                  <div class="text-xs text-gray-500 mt-0.5">ประเมินโดย พยาบาล สมหมาย</div>
+                </div>
+                <span class="badge-moderate text-xs px-2 py-1 rounded-full font-medium">Moderate</span>
+              </div>
+              <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                <div class="flex-1">
+                  <div class="text-sm font-medium text-gray-700">22 พ.ค. 2567 08:30 น.</div>
+                  <div class="text-xs text-gray-500 mt-0.5">ประเมินโดย พยาบาล ณัฐริดา</div>
+                </div>
+                <span class="badge-moderate text-xs px-2 py-1 rounded-full font-medium">Moderate</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Trend chart placeholder -->
+          <div class="card p-5">
+            <h3 class="font-bold text-gray-800 mb-3">แนวโน้มระดับความรุนแรง</h3>
+            <div class="space-y-2">
+              <div class="flex items-center gap-2 text-xs">
+                <span class="text-gray-500 w-16">22 พ.ค.</span>
+                <div class="flex-1 h-5 bg-amber-100 rounded flex items-center pl-2">
+                  <span class="text-amber-700 font-medium text-xs">Moderate</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 text-xs">
+                <span class="text-gray-500 w-16">23 พ.ค.</span>
+                <div class="flex-1 h-5 bg-amber-100 rounded flex items-center pl-2">
+                  <span class="text-amber-700 font-medium text-xs">Moderate</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 text-xs">
+                <span class="text-gray-500 w-16">24 พ.ค.</span>
+                <div class="flex-1 h-5 bg-green-100 rounded flex items-center pl-2">
+                  <span class="text-green-700 font-medium text-xs">Mild ↓ ดีขึ้น</span>
+                </div>
+              </div>
+            </div>
+            <div class="mt-3 text-xs text-green-600 font-medium flex items-center gap-1">
+              <i class="fas fa-circle-check"></i> อาการดีขึ้นต่อเนื่อง
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== PAGE: GUIDELINE ====== -->
+    <div id="page-guideline" class="page fade-in">
+      <div class="mb-6">
+        <h2 class="text-xl font-bold text-gray-800">แนวทางการรักษา IAD</h2>
+        <p class="text-sm text-gray-500 mt-1">แนวทางการดูแลรักษาตามระดับความรุนแรง (IAD Severity)</p>
+      </div>
+
+      <!-- 3 severity columns -->
+      <div class="grid lg:grid-cols-3 gap-6 mb-8">
+        <!-- MILD -->
+        <div class="sev-card mild card-hover">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-bold text-green-700 text-lg">แนวทางการรักษา IAD</h3>
+            <span class="bg-green-600 text-white text-xs px-3 py-1 rounded-full font-bold">MILD</span>
+          </div>
+          <div class="text-center text-xs text-green-600 font-medium mb-4">(ผิวหนังแดง ไม่มีแผลเปิด)</div>
+          <!-- skin illustration -->
+          <div class="w-28 h-20 mx-auto mb-4 rounded-xl skin-mild flex items-center justify-center">
+            <svg viewBox="0 0 80 60" class="w-full h-full opacity-60">
+              <ellipse cx="40" cy="35" rx="35" ry="20" fill="#fca5a5" opacity="0.5"/>
+              <ellipse cx="40" cy="30" rx="28" ry="14" fill="#f87171" opacity="0.4"/>
+            </svg>
+          </div>
+          <ul class="space-y-2.5 mb-5">
+            <li class="flex items-start gap-2 text-sm text-gray-700">
+              <i class="fas fa-circle-check text-green-500 mt-0.5 flex-shrink-0"></i>
+              ทำความสะอาดด้วยน้ำเปล่าและซับให้แห้งเบาๆ
+            </li>
+            <li class="flex items-start gap-2 text-sm text-gray-700">
+              <i class="fas fa-circle-check text-green-500 mt-0.5 flex-shrink-0"></i>
+              ทาครีมป้องกันผิว (Barrier cream) เช่น Zinc Oxide, Dimethicone
+            </li>
+            <li class="flex items-start gap-2 text-sm text-gray-700">
+              <i class="fas fa-circle-check text-green-500 mt-0.5 flex-shrink-0"></i>
+              เปลี่ยนผ้าอ้อม/แผ่นรองซับบ่อยขึ้น
+            </li>
+            <li class="flex items-start gap-2 text-sm text-gray-700">
+              <i class="fas fa-circle-check text-green-500 mt-0.5 flex-shrink-0"></i>
+              ประเมินผิวหนังทุก 8-12 ชั่วโมง
+            </li>
+          </ul>
+          <div class="goal-box green">
+            <div class="flex items-start gap-2">
+              <i class="fas fa-lightbulb text-green-500 mt-0.5"></i>
+              <div>
+                <div class="text-xs font-bold text-green-700">เป้าหมาย</div>
+                <div class="text-xs text-green-600 mt-0.5">ป้องกันผิวหนังเกิดการระคายเคืองมากขึ้น</div>
+              </div>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-2 mt-4">
+            <button onclick="closeSeverityModal()" class="border border-gray-300 text-gray-600 py-2 rounded-xl text-sm hover:bg-gray-50 transition">ปิด</button>
+            <button class="bg-green-600 text-white py-2 rounded-xl text-sm font-medium hover:bg-green-700 transition" onclick="applyGuideline('mild')">นำไปใช้</button>
+          </div>
+        </div>
+
+        <!-- MODERATE -->
+        <div class="sev-card moderate card-hover">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-bold text-amber-700 text-lg">แนวทางการรักษา IAD</h3>
+            <span class="bg-amber-500 text-white text-xs px-3 py-1 rounded-full font-bold">MODERATE</span>
+          </div>
+          <div class="text-center text-xs text-amber-600 font-medium mb-4">(ผิวหนังแดง มีรอยถลอก/แผลตื้น)</div>
+          <div class="w-28 h-20 mx-auto mb-4 rounded-xl skin-moderate flex items-center justify-center">
+            <svg viewBox="0 0 80 60" class="w-full h-full opacity-60">
+              <ellipse cx="40" cy="35" rx="35" ry="20" fill="#fca5a5" opacity="0.5"/>
+              <ellipse cx="40" cy="30" rx="25" ry="12" fill="#f87171" opacity="0.5"/>
+              <ellipse cx="35" cy="28" rx="6" ry="4" fill="#dc2626" opacity="0.6"/>
+              <ellipse cx="47" cy="32" rx="5" ry="3" fill="#dc2626" opacity="0.6"/>
+            </svg>
+          </div>
+          <ul class="space-y-2.5 mb-5">
+            <li class="flex items-start gap-2 text-sm text-gray-700">
+              <i class="fas fa-circle-check text-amber-500 mt-0.5 flex-shrink-0"></i>
+              ทำความสะอาดผิวหนังอย่างอ่อนโยน
+            </li>
+            <li class="flex items-start gap-2 text-sm text-gray-700">
+              <i class="fas fa-circle-check text-amber-500 mt-0.5 flex-shrink-0"></i>
+              ใช้ผลิตภัณฑ์ที่ปกป้องผิวที่มี Zinc Oxide หรือ Petrolatum
+            </li>
+            <li class="flex items-start gap-2 text-sm text-gray-700">
+              <i class="fas fa-circle-check text-amber-500 mt-0.5 flex-shrink-0"></i>
+              พิจารณาใช้แผ่นรองซับที่ดูดซับดี
+            </li>
+            <li class="flex items-start gap-2 text-sm text-gray-700">
+              <i class="fas fa-circle-check text-amber-500 mt-0.5 flex-shrink-0"></i>
+              ปรึกษาแพทย์/พยาบาลแผลหากไม่ดีขึ้นใน 2-3 วัน
+            </li>
+          </ul>
+          <div class="goal-box">
+            <div class="flex items-start gap-2">
+              <i class="fas fa-lightbulb text-amber-500 mt-0.5"></i>
+              <div>
+                <div class="text-xs font-bold text-amber-700">เป้าหมาย</div>
+                <div class="text-xs text-amber-600 mt-0.5">ลดการอักเสบ ส่งเสริมการหายของผิว</div>
+              </div>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-2 mt-4">
+            <button onclick="closeSeverityModal()" class="border border-gray-300 text-gray-600 py-2 rounded-xl text-sm hover:bg-gray-50 transition">ปิด</button>
+            <button class="bg-amber-500 text-white py-2 rounded-xl text-sm font-medium hover:bg-amber-600 transition" onclick="applyGuideline('moderate')">นำไปใช้</button>
+          </div>
+        </div>
+
+        <!-- SEVERE -->
+        <div class="sev-card severe card-hover">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-bold text-red-700 text-lg">แนวทางการรักษา IAD</h3>
+            <span class="bg-red-600 text-white text-xs px-3 py-1 rounded-full font-bold">SEVERE</span>
+          </div>
+          <div class="text-center text-xs text-red-600 font-medium mb-4">(แผลลึก มีเลือดออก หรือติดเชื้อ)</div>
+          <div class="w-28 h-20 mx-auto mb-4 rounded-xl skin-severe flex items-center justify-center">
+            <svg viewBox="0 0 80 60" class="w-full h-full opacity-60">
+              <ellipse cx="40" cy="35" rx="35" ry="20" fill="#fca5a5" opacity="0.4"/>
+              <ellipse cx="40" cy="30" rx="25" ry="12" fill="#ef4444" opacity="0.5"/>
+              <ellipse cx="38" cy="28" rx="10" ry="7" fill="#dc2626" opacity="0.8"/>
+              <path d="M 33 25 Q 38 35 43 25" stroke="#991b1b" stroke-width="1.5" fill="none"/>
+            </svg>
+          </div>
+          <ul class="space-y-2.5 mb-5">
+            <li class="flex items-start gap-2 text-sm text-gray-700">
+              <i class="fas fa-circle-xmark text-red-500 mt-0.5 flex-shrink-0"></i>
+              ทำความสะอาดอย่างอ่อนโยน
+            </li>
+            <li class="flex items-start gap-2 text-sm text-gray-700">
+              <i class="fas fa-circle-xmark text-red-500 mt-0.5 flex-shrink-0"></i>
+              ประเมินการติดเชื้อ (เช่น เชื้อรา แบคทีเรีย)
+            </li>
+            <li class="flex items-start gap-2 text-sm text-gray-700">
+              <i class="fas fa-circle-xmark text-red-500 mt-0.5 flex-shrink-0"></i>
+              ปรึกษาแพทย์เพื่อพิจารณาการใช้ยา
+            </li>
+            <li class="flex items-start gap-2 text-sm text-gray-700">
+              <i class="fas fa-circle-xmark text-red-500 mt-0.5 flex-shrink-0"></i>
+              พิจารณาใช้แผ่นปิดแผลเฉพาะราย
+            </li>
+            <li class="flex items-start gap-2 text-sm text-gray-700">
+              <i class="fas fa-circle-xmark text-red-500 mt-0.5 flex-shrink-0"></i>
+              ติดตามอาการอย่างใกล้ชิด
+            </li>
+          </ul>
+          <div class="goal-box red">
+            <div class="flex items-start gap-2">
+              <i class="fas fa-lightbulb text-red-500 mt-0.5"></i>
+              <div>
+                <div class="text-xs font-bold text-red-700">เป้าหมาย</div>
+                <div class="text-xs text-red-600 mt-0.5">ควบคุมการติดเชื้อ ป้องกันภาวะแทรกซ้อน</div>
+              </div>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-2 mt-4">
+            <button onclick="closeSeverityModal()" class="border border-gray-300 text-gray-600 py-2 rounded-xl text-sm hover:bg-gray-50 transition">ปิด</button>
+            <button class="bg-red-600 text-white py-2 rounded-xl text-sm font-medium hover:bg-red-700 transition" onclick="alertTeam()">แจ้งทีมรักษา</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Principles -->
+      <div class="card p-6">
+        <h3 class="font-bold text-gray-800 mb-5 text-base">หลักการสำคัญในการป้องกัน IAD</h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="text-center">
+            <div class="principle-icon bg-blue-100 mx-auto mb-3"><i class="fas fa-droplet text-blue-500"></i></div>
+            <div class="text-xs font-medium text-gray-700">ทำความสะอาดอย่างอ่อนโยนและซับให้แห้งเสมอ</div>
+          </div>
+          <div class="text-center">
+            <div class="principle-icon bg-purple-100 mx-auto mb-3"><i class="fas fa-shield-halved text-purple-500"></i></div>
+            <div class="text-xs font-medium text-gray-700">ปกป้องผิวด้วย Barrier cream</div>
+          </div>
+          <div class="text-center">
+            <div class="principle-icon bg-emerald-100 mx-auto mb-3"><i class="fas fa-shirt text-emerald-500"></i></div>
+            <div class="text-xs font-medium text-gray-700">เปลี่ยนผ้าอ้อม/แผ่นรองซับอย่างสม่ำเสมอ</div>
+          </div>
+          <div class="text-center">
+            <div class="principle-icon bg-amber-100 mx-auto mb-3"><i class="fas fa-users text-amber-500"></i></div>
+            <div class="text-xs font-medium text-gray-700">ประเมินผิวหนังอย่างต่อเนื่อง</div>
+          </div>
+        </div>
+        <div class="mt-5 p-3 bg-gray-50 rounded-xl text-xs text-gray-500 flex items-start gap-2">
+          <i class="fas fa-circle-info text-gray-400 mt-0.5"></i>
+          <span>อ้างอิง : WOCN Society Guideline for Prevention and Management of IAD, 2021</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== PAGE: TRACK ====== -->
+    <div id="page-track" class="page fade-in">
+      <div class="card p-8 text-center">
+        <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <i class="fas fa-chart-line text-green-600 text-2xl"></i>
+        </div>
+        <h2 class="text-xl font-bold text-gray-800 mb-2">ติดตามแผล</h2>
+        <p class="text-gray-500 text-sm">ระบบติดตามความคืบหน้าของแผลและประวัติการรักษา</p>
+        <div class="mt-6 grid md:grid-cols-3 gap-4">
+          <div class="p-4 bg-green-50 rounded-xl border border-green-100">
+            <div class="text-2xl font-bold text-green-700">7</div>
+            <div class="text-sm text-green-600">ผู้ป่วยที่ดีขึ้น</div>
+          </div>
+          <div class="p-4 bg-amber-50 rounded-xl border border-amber-100">
+            <div class="text-2xl font-bold text-amber-700">3</div>
+            <div class="text-sm text-amber-600">ผู้ป่วยคงที่</div>
+          </div>
+          <div class="p-4 bg-red-50 rounded-xl border border-red-100">
+            <div class="text-2xl font-bold text-red-700">2</div>
+            <div class="text-sm text-red-600">ต้องติดตามด่วน</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== PAGE: REPORT ====== -->
+    <div id="page-report" class="page fade-in">
+      <div class="card p-8 text-center">
+        <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <i class="fas fa-file-medical text-blue-600 text-2xl"></i>
+        </div>
+        <h2 class="text-xl font-bold text-gray-800 mb-2">รายงาน</h2>
+        <p class="text-gray-500 text-sm mb-6">รายงานสถิติและการวิเคราะห์ข้อมูล IAD</p>
+        <div class="grid md:grid-cols-2 gap-4 text-left">
+          <button class="p-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition flex items-center gap-3">
+            <i class="fas fa-file-pdf text-red-500 text-xl"></i>
+            <div><div class="font-medium text-gray-800 text-sm">รายงานรายวัน</div><div class="text-xs text-gray-500">PDF Export</div></div>
+          </button>
+          <button class="p-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition flex items-center gap-3">
+            <i class="fas fa-file-excel text-green-500 text-xl"></i>
+            <div><div class="font-medium text-gray-800 text-sm">รายงานรายเดือน</div><div class="text-xs text-gray-500">Excel Export</div></div>
+          </button>
+          <button class="p-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition flex items-center gap-3">
+            <i class="fas fa-chart-bar text-blue-500 text-xl"></i>
+            <div><div class="font-medium text-gray-800 text-sm">สถิติตามหอผู้ป่วย</div><div class="text-xs text-gray-500">Ward Statistics</div></div>
+          </button>
+          <button class="p-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition flex items-center gap-3">
+            <i class="fas fa-arrow-trend-up text-purple-500 text-xl"></i>
+            <div><div class="font-medium text-gray-800 text-sm">แนวโน้มการรักษา</div><div class="text-xs text-gray-500">Treatment Trends</div></div>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== PAGE: USERS ====== -->
+    <div id="page-users" class="page fade-in">
+      <div class="card p-6">
+        <div class="flex items-center justify-between mb-5">
+          <h2 class="font-bold text-gray-800 text-base">จัดการผู้ใช้งาน</h2>
+          <button class="bg-green-600 text-white text-sm px-4 py-2 rounded-xl hover:bg-green-700 transition flex items-center gap-2">
+            <i class="fas fa-plus"></i> เพิ่มผู้ใช้
+          </button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th class="text-left text-xs px-3 py-3">ชื่อ-นามสกุล</th>
+              <th class="text-left text-xs px-3 py-3">ตำแหน่ง</th>
+              <th class="text-left text-xs px-3 py-3">Ward</th>
+              <th class="text-left text-xs px-3 py-3">สถานะ</th>
+              <th class="text-left text-xs px-3 py-3">จัดการ</th>
+            </tr>
+          </thead>
+          <tbody class="text-sm">
+            <tr class="border-t border-gray-50">
+              <td class="px-3 py-3 font-medium text-gray-800">พยาบาล ณัฐริดา กิจดี</td>
+              <td class="px-3 py-3 text-gray-500">พยาบาลวิชาชีพ</td>
+              <td class="px-3 py-3 text-gray-500">Ward 3A</td>
+              <td class="px-3 py-3"><span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">ใช้งาน</span></td>
+              <td class="px-3 py-3"><button class="text-xs text-blue-600 hover:underline">แก้ไข</button></td>
+            </tr>
+            <tr class="border-t border-gray-50">
+              <td class="px-3 py-3 font-medium text-gray-800">พยาบาล สมหมาย ใจดี</td>
+              <td class="px-3 py-3 text-gray-500">พยาบาลวิชาชีพ</td>
+              <td class="px-3 py-3 text-gray-500">Ward 3A</td>
+              <td class="px-3 py-3"><span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">ใช้งาน</span></td>
+              <td class="px-3 py-3"><button class="text-xs text-blue-600 hover:underline">แก้ไข</button></td>
+            </tr>
+            <tr class="border-t border-gray-50">
+              <td class="px-3 py-3 font-medium text-gray-800">แพทย์ นพ. วิชัย สมบัติ</td>
+              <td class="px-3 py-3 text-gray-500">แพทย์เจ้าของไข้</td>
+              <td class="px-3 py-3 text-gray-500">Ward 3A, 3B</td>
+              <td class="px-3 py-3"><span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">ใช้งาน</span></td>
+              <td class="px-3 py-3"><button class="text-xs text-blue-600 hover:underline">แก้ไข</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ====== PAGE: SETTINGS ====== -->
+    <div id="page-settings" class="page fade-in">
+      <div class="card p-6 max-w-2xl">
+        <h2 class="font-bold text-gray-800 mb-5">ตั้งค่าระบบ</h2>
+        <div class="space-y-4">
+          <div class="flex items-center justify-between p-4 border border-gray-100 rounded-xl">
+            <div><div class="font-medium text-gray-800 text-sm">การแจ้งเตือน</div><div class="text-xs text-gray-500">รับการแจ้งเตือนเมื่อมีผู้ป่วยระดับ Severe</div></div>
+            <button class="w-12 h-6 bg-green-500 rounded-full relative transition" onclick="this.classList.toggle('bg-green-500'); this.classList.toggle('bg-gray-300')"><span class="absolute w-5 h-5 bg-white rounded-full top-0.5 right-0.5 transition"></span></button>
+          </div>
+          <div class="flex items-center justify-between p-4 border border-gray-100 rounded-xl">
+            <div><div class="font-medium text-gray-800 text-sm">ภาษา</div><div class="text-xs text-gray-500">เลือกภาษาที่ใช้ในระบบ</div></div>
+            <select class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm"><option>ภาษาไทย</option><option>English</option></select>
+          </div>
+          <div class="flex items-center justify-between p-4 border border-gray-100 rounded-xl">
+            <div><div class="font-medium text-gray-800 text-sm">ความถี่การประเมิน</div><div class="text-xs text-gray-500">กำหนดช่วงเวลาการประเมินผิวหนัง</div></div>
+            <select class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm"><option>ทุก 8 ชั่วโมง</option><option>ทุก 12 ชั่วโมง</option><option>วันละครั้ง</option></select>
+          </div>
+        </div>
+        <button class="mt-5 bg-green-600 text-white px-6 py-2.5 rounded-xl text-sm font-medium hover:bg-green-700 transition">บันทึกการตั้งค่า</button>
+      </div>
+    </div>
+
+  </div><!-- /p-6 -->
+</main>
+</div><!-- /flex -->
+
+<!-- ============================================ -->
+<!--  MOBILE BOTTOM NAV                          -->
+<!-- ============================================ -->
+<nav class="mobile-nav fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 px-2 py-2">
+  <div class="flex justify-around">
+    <button onclick="switchPage('dashboard')" class="flex flex-col items-center gap-1 text-green-600 px-3 py-1">
+      <i class="fas fa-house text-xl"></i><span class="text-xs">หน้าหลัก</span>
+    </button>
+    <button onclick="switchPage('assess')" class="flex flex-col items-center gap-1 text-gray-400 px-3 py-1">
+      <i class="fas fa-user-check text-xl"></i><span class="text-xs">ประเมิน</span>
+    </button>
+    <button onclick="switchPage('report')" class="flex flex-col items-center gap-1 text-gray-400 px-3 py-1">
+      <i class="fas fa-file-medical text-xl"></i><span class="text-xs">รายงาน</span>
+    </button>
+    <button onclick="switchPage('guideline')" class="flex flex-col items-center gap-1 text-gray-400 px-3 py-1">
+      <i class="fas fa-book-medical text-xl"></i><span class="text-xs">แนวทาง</span>
+    </button>
+    <button onclick="switchPage('settings')" class="flex flex-col items-center gap-1 text-gray-400 px-3 py-1">
+      <i class="fas fa-ellipsis text-xl"></i><span class="text-xs">เพิ่มเติม</span>
+    </button>
+  </div>
+</nav>
+
+<!-- ============================================ -->
+<!--  MODALS                                     -->
+<!-- ============================================ -->
+
+<!-- Guideline Overview Modal (shows all 3 levels) -->
+<div id="guideline-modal" class="modal-overlay" onclick="closeGuidelineModal(event)">
+  <div class="modal-box p-7" onclick="event.stopPropagation()">
+    <div class="flex items-center justify-between mb-5">
+      <div>
+        <h2 class="text-xl font-bold text-gray-800">แนวทางการรักษา IAD</h2>
+        <p class="text-sm text-gray-500 mt-0.5">แนวทางการดูแลรักษาตามระดับความรุนแรง</p>
+      </div>
+      <button onclick="closeGuidelineModal()" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 transition text-lg">×</button>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-4 mb-6">
+      <!-- MILD -->
+      <div class="sev-card mild">
+        <div class="text-center mb-3">
+          <span class="font-bold text-green-700 text-base">MILD</span>
+          <div class="text-xs text-green-600 mt-0.5">(ผิวหนังแดง ไม่มีแผลเปิด)</div>
+        </div>
+        <div class="w-20 h-16 mx-auto mb-3 rounded-xl skin-mild opacity-70 flex items-center justify-center">
+          <i class="fas fa-circle text-rose-300 text-4xl opacity-60"></i>
+        </div>
+        <ul class="space-y-2 text-xs text-gray-700">
+          <li class="flex gap-2"><i class="fas fa-circle-check text-green-500 flex-shrink-0 mt-0.5"></i>ทำความสะอาดด้วยน้ำเปล่าและซับให้แห้งเบาๆ</li>
+          <li class="flex gap-2"><i class="fas fa-circle-check text-green-500 flex-shrink-0 mt-0.5"></i>ทาครีมป้องกันผิว (Barrier cream) เช่น Zinc Oxide, Dimethicone</li>
+          <li class="flex gap-2"><i class="fas fa-circle-check text-green-500 flex-shrink-0 mt-0.5"></i>เปลี่ยนผ้าอ้อม/แผ่นรองซับบ่อยขึ้น</li>
+          <li class="flex gap-2"><i class="fas fa-circle-check text-green-500 flex-shrink-0 mt-0.5"></i>ประเมินผิวหนังทุก 8-12 ชั่วโมง</li>
+        </ul>
+        <div class="goal-box green mt-4">
+          <div class="text-xs font-bold text-green-700">เป้าหมาย</div>
+          <div class="text-xs text-green-600 mt-0.5">ป้องกันผิวหนังเกิดการระคายเคืองมากขึ้น</div>
+        </div>
+      </div>
+
+      <!-- MODERATE -->
+      <div class="sev-card moderate">
+        <div class="text-center mb-3">
+          <span class="font-bold text-amber-700 text-base">MODERATE</span>
+          <div class="text-xs text-amber-600 mt-0.5">(ผิวหนังแดง มีรอยถลอก/แผลตื้น)</div>
+        </div>
+        <div class="w-20 h-16 mx-auto mb-3 rounded-xl skin-moderate opacity-70 flex items-center justify-center">
+          <i class="fas fa-circle text-orange-300 text-4xl opacity-60"></i>
+        </div>
+        <ul class="space-y-2 text-xs text-gray-700">
+          <li class="flex gap-2"><i class="fas fa-circle-check text-amber-500 flex-shrink-0 mt-0.5"></i>ทำความสะอาดและซับให้แห้ง</li>
+          <li class="flex gap-2"><i class="fas fa-circle-check text-amber-500 flex-shrink-0 mt-0.5"></i>ใช้ผลิตภัณฑ์ที่ปกป้องผิวที่มี Zinc Oxide หรือ Petrolatum</li>
+          <li class="flex gap-2"><i class="fas fa-circle-check text-amber-500 flex-shrink-0 mt-0.5"></i>พิจารณาใช้แผ่นรองซับที่ดูดซับดี</li>
+          <li class="flex gap-2"><i class="fas fa-circle-check text-amber-500 flex-shrink-0 mt-0.5"></i>ปรึกษาแพทย์/พยาบาลแผลหากไม่ดีขึ้นใน 2-3 วัน</li>
+        </ul>
+        <div class="goal-box mt-4">
+          <div class="text-xs font-bold text-amber-700">เป้าหมาย</div>
+          <div class="text-xs text-amber-600 mt-0.5">ลดการอักเสบ ส่งเสริมการหายของผิว</div>
+        </div>
+      </div>
+
+      <!-- SEVERE -->
+      <div class="sev-card severe">
+        <div class="text-center mb-3">
+          <span class="font-bold text-red-700 text-base">SEVERE</span>
+          <div class="text-xs text-red-600 mt-0.5">(แผลลึก มีเลือดออก หรือติดเชื้อ)</div>
+        </div>
+        <div class="w-20 h-16 mx-auto mb-3 rounded-xl skin-severe opacity-70 flex items-center justify-center">
+          <i class="fas fa-circle text-red-300 text-4xl opacity-60"></i>
+        </div>
+        <ul class="space-y-2 text-xs text-gray-700">
+          <li class="flex gap-2"><i class="fas fa-circle-xmark text-red-500 flex-shrink-0 mt-0.5"></i>ทำความสะอาดอย่างอ่อนโยน</li>
+          <li class="flex gap-2"><i class="fas fa-circle-xmark text-red-500 flex-shrink-0 mt-0.5"></i>ประเมินการติดเชื้อ (เช่น เชื้อรา แบคทีเรีย)</li>
+          <li class="flex gap-2"><i class="fas fa-circle-xmark text-red-500 flex-shrink-0 mt-0.5"></i>ปรึกษาแพทย์เพื่อพิจารณาการใช้ยา</li>
+          <li class="flex gap-2"><i class="fas fa-circle-xmark text-red-500 flex-shrink-0 mt-0.5"></i>พิจารณาใช้แผ่นปิดแผลเฉพาะราย</li>
+          <li class="flex gap-2"><i class="fas fa-circle-xmark text-red-500 flex-shrink-0 mt-0.5"></i>ติดตามอาการอย่างใกล้ชิด</li>
+        </ul>
+        <div class="goal-box red mt-4">
+          <div class="text-xs font-bold text-red-700">เป้าหมาย</div>
+          <div class="text-xs text-red-600 mt-0.5">ควบคุมการติดเชื้อ ป้องกันภาวะแทรกซ้อน</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Principles -->
+    <div class="bg-gray-50 rounded-2xl p-5 mb-5">
+      <h4 class="font-bold text-gray-700 text-sm mb-4">หลักการสำคัญในการป้องกัน IAD</h4>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="text-center">
+          <div class="principle-icon bg-blue-100 mx-auto mb-2" style="width:44px;height:44px;font-size:18px">
+            <i class="fas fa-droplet text-blue-500"></i>
+          </div>
+          <div class="text-xs text-gray-600">ทำความสะอาดอย่างอ่อนโยนและซับให้แห้งเสมอ</div>
+        </div>
+        <div class="text-center">
+          <div class="principle-icon bg-purple-100 mx-auto mb-2" style="width:44px;height:44px;font-size:18px">
+            <i class="fas fa-shield-halved text-purple-500"></i>
+          </div>
+          <div class="text-xs text-gray-600">ปกป้องผิวด้วย Barrier cream</div>
+        </div>
+        <div class="text-center">
+          <div class="principle-icon bg-emerald-100 mx-auto mb-2" style="width:44px;height:44px;font-size:18px">
+            <i class="fas fa-shirt text-emerald-500"></i>
+          </div>
+          <div class="text-xs text-gray-600">เปลี่ยนผ้าอ้อม/แผ่นรองซับอย่างสม่ำเสมอ</div>
+        </div>
+        <div class="text-center">
+          <div class="principle-icon bg-amber-100 mx-auto mb-2" style="width:44px;height:44px;font-size:18px">
+            <i class="fas fa-users text-amber-500"></i>
+          </div>
+          <div class="text-xs text-gray-600">ประเมินผิวหนังอย่างต่อเนื่อง</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="text-xs text-gray-400 text-center mb-4">
+      <i class="fas fa-circle-info mr-1"></i>
+      อ้างอิง : WOCN Society Guideline for Prevention and Management of IAD, 2021
+    </div>
+
+    <div class="flex justify-end">
+      <button onclick="closeGuidelineModal()" class="bg-green-600 text-white px-8 py-2.5 rounded-xl font-medium hover:bg-green-700 transition">ปิด</button>
+    </div>
+
+    <div class="text-center mt-3">
+      <span class="text-xs text-gray-400"><i class="fas fa-circle-info mr-1"></i>กดนอกพื้นที่ Popup เพื่อปิดได้</span>
+    </div>
+  </div>
+</div>
+
+<!-- Severity Specific Modal (single level popup from assessment) -->
+<div id="severity-modal" class="modal-overlay" onclick="closeSeverityModal()">
+  <div class="modal-box modal-box-sm p-7" onclick="event.stopPropagation()">
+    <div id="severity-modal-content"></div>
+  </div>
+</div>
+
+<!-- Success Toast -->
+<div id="toast" class="fixed bottom-24 left-1/2 -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-2xl shadow-xl text-sm font-medium flex items-center gap-2 z-[999] opacity-0 transition-all duration-300 pointer-events-none">
+  <i class="fas fa-circle-check"></i>
+  <span id="toast-text">บันทึกข้อมูลสำเร็จ</span>
+</div>
+
+<!-- ============================================ -->
+<!--  JAVASCRIPT                                 -->
+<!-- ============================================ -->
+<script>
+let currentSeverity = 'mild';
+const pageTitles = {
+  dashboard: 'หน้าหลัก',
+  assess: 'ประเมิน IAD รายวัน',
+  track: 'ติดตามแผล',
+  report: 'รายงาน',
+  guideline: 'แนวทางการรักษา IAD',
+  users: 'ผู้ใช้งาน',
+  settings: 'ตั้งค่า'
+};
+
+function switchPage(name) {
+  // Hide all pages
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  // Show target
+  const el = document.getElementById('page-' + name);
+  if (el) { el.classList.add('active'); el.classList.remove('fade-in'); void el.offsetWidth; el.classList.add('fade-in'); }
+  // Update title
+  document.getElementById('page-title').textContent = pageTitles[name] || name;
+  // Update sidebar active
+  document.querySelectorAll('.nav-item').forEach(n => { n.classList.remove('active'); n.classList.add('text-gray-400'); n.classList.remove('text-white'); });
+  const navItems = document.querySelectorAll('.nav-item');
+  const pages = ['dashboard','assess','track','report','guideline','users','settings'];
+  const idx = pages.indexOf(name);
+  if (navItems[idx]) {
+    navItems[idx].classList.add('active');
+    navItems[idx].classList.remove('text-gray-400');
+    navItems[idx].classList.add('text-white');
+  }
+  // Scroll to top
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function openAssessForm() {
+  switchPage('assess');
+}
+
+// Severity selector in assessment form
+function selectSeverity(level, btn) {
+  currentSeverity = level;
+  const btns = document.querySelectorAll('.sev-btn');
+  btns.forEach(b => {
+    b.classList.remove('mild-active','moderate-active','severe-active');
+    b.classList.add('text-gray-500');
+    b.style.color = '';
+  });
+  btn.classList.add(level + '-active');
+  btn.classList.remove('text-gray-500');
+
+  // Auto show guideline popup
+  setTimeout(() => openSeverityGuide(level), 200);
+}
+
+// Open full guideline modal
+function openGuidelineModal() {
+  document.getElementById('guideline-modal').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+function closeGuidelineModal(e) {
+  if (!e || e.target === document.getElementById('guideline-modal')) {
+    document.getElementById('guideline-modal').classList.remove('show');
+    document.body.style.overflow = '';
   }
 }
 
-document.getElementById('search-input').addEventListener('input', () => { clearTimeout(debounceTimer); debounceTimer = setTimeout(render, 250); });
-document.getElementById('filter-class').addEventListener('change', render);
-document.getElementById('sort-select').addEventListener('change', render);
-document.getElementById('btn-refresh').addEventListener('click', () => fetchData(true));
+// Open single severity popup
+function openSeverityGuide(level) {
+  const data = {
+    mild: {
+      title: 'แนวทางการรักษา IAD',
+      badge: 'MODERATE',
+      badgeClass: 'bg-green-600',
+      headerClass: 'text-green-700',
+      cardClass: 'mild',
+      subtext: 'ผิวหนังแดง ไม่มีแผลเปิด',
+      icon: 'fas fa-circle-check text-green-500',
+      items: [
+        'ทำความสะอาดด้วยน้ำเปล่าและซับให้แห้งเบาๆ',
+        'ทาครีมป้องกันผิว (Barrier cream) เช่น Zinc Oxide, Dimethicone',
+        'เปลี่ยนผ้าอ้อม/แผ่นรองซับบ่อยขึ้น',
+        'ประเมินผิวหนังทุก 8-12 ชั่วโมง'
+      ],
+      goalClass: 'green',
+      goal: 'ป้องกันผิวหนังเกิดการระคายเคืองมากขึ้น',
+      btnColor: 'bg-green-600 hover:bg-green-700',
+      action: "applyGuideline('mild')",
+      actionLabel: 'นำไปใช้',
+      badge2: 'MILD'
+    },
+    moderate: {
+      title: 'แนวทางการรักษา IAD',
+      badge: 'MODERATE',
+      badgeClass: 'bg-amber-500',
+      headerClass: 'text-amber-700',
+      cardClass: 'moderate',
+      subtext: 'ผิวหนังแดง มีรอยถลอก/แผลตื้น',
+      icon: 'fas fa-circle-check text-amber-500',
+      items: [
+        'ทำความสะอาดผิวหนังอย่างอ่อนโยน',
+        'ใช้ผลิตภัณฑ์ที่ปกป้องผิวที่มี Zinc Oxide หรือ Petrolatum',
+        'พิจารณาใช้แผ่นรองซับที่ดูดซับดี',
+        'ปรึกษาแพทย์/พยาบาลแผลหากไม่ดีขึ้นใน 2-3 วัน'
+      ],
+      goalClass: '',
+      goal: 'ลดการอักเสบ ส่งเสริมการหายของผิว',
+      btnColor: 'bg-amber-500 hover:bg-amber-600',
+      action: "applyGuideline('moderate')",
+      actionLabel: 'นำไปใช้',
+      badge2: 'MODERATE'
+    },
+    severe: {
+      title: 'แนวทางการรักษา IAD',
+      badge: 'SEVERE',
+      badgeClass: 'bg-red-600',
+      headerClass: 'text-red-700',
+      cardClass: 'severe',
+      subtext: 'แผลลึก มีเลือดออก หรือติดเชื้อ',
+      icon: 'fas fa-circle-xmark text-red-500',
+      items: [
+        'ทำความสะอาดอย่างอ่อนโยน',
+        'ประเมินการติดเชื้อ (เช่น เชื้อรา แบคทีเรีย)',
+        'ปรึกษาแพทย์เพื่อพิจารณาการใช้ยา',
+        'พิจารณาใช้แผ่นปิดแผลเฉพาะราย',
+        'ติดตามอาการอย่างใกล้ชิด'
+      ],
+      goalClass: 'red',
+      goal: 'ควบคุมการติดเชื้อ ป้องกันภาวะแทรกซ้อน',
+      btnColor: 'bg-red-600 hover:bg-red-700',
+      action: "alertTeam()",
+      actionLabel: 'แจ้งทีมรักษา',
+      badge2: 'SEVERE'
+    }
+  };
+  const d = data[level] || data.mild;
+  const itemsHtml = d.items.map(i => `
+    <li class="flex items-start gap-2 text-sm text-gray-700">
+      <i class="${d.icon} mt-0.5 flex-shrink-0"></i>${i}
+    </li>`).join('');
 
-document.getElementById('view-cards').addEventListener('click', () => { currentView='cards'; document.getElementById('view-cards').className='px-3 py-2 text-sm bg-blue-100 text-blue-700'; document.getElementById('view-table').className='px-3 py-2 text-sm text-slate-500 hover:bg-slate-50'; render(); });
-document.getElementById('view-table').addEventListener('click', () => { currentView='table'; document.getElementById('view-table').className='px-3 py-2 text-sm bg-blue-100 text-blue-700'; document.getElementById('view-cards').className='px-3 py-2 text-sm text-slate-500 hover:bg-slate-50'; render(); });
+  document.getElementById('severity-modal-content').innerHTML = `
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center gap-2">
+        <h3 class="font-bold ${d.headerClass} text-base">${d.title}</h3>
+        <span class="${d.badgeClass} text-white text-xs px-3 py-1 rounded-full font-bold">${d.badge2}</span>
+      </div>
+      <button onclick="closeSeverityModal()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 text-xl transition">×</button>
+    </div>
+    <div class="sev-card ${d.cardClass} mb-4">
+      <div class="text-center text-xs font-medium mb-4 ${d.headerClass}">(${d.subtext})</div>
+      <div class="w-24 h-16 mx-auto mb-4 rounded-xl skin-${level} opacity-70 flex items-center justify-center">
+        <i class="fas fa-circle text-3xl opacity-50 ${level === 'mild' ? 'text-rose-300' : level === 'moderate' ? 'text-orange-300' : 'text-red-300'}"></i>
+      </div>
+      <ul class="space-y-2.5 mb-4">${itemsHtml}</ul>
+      <div class="goal-box ${d.goalClass}">
+        <div class="flex items-start gap-2">
+          <i class="fas fa-lightbulb ${level === 'mild' ? 'text-green-500' : level === 'moderate' ? 'text-amber-500' : 'text-red-500'} mt-0.5"></i>
+          <div>
+            <div class="text-xs font-bold ${d.headerClass}">เป้าหมาย</div>
+            <div class="text-xs mt-0.5 ${level === 'mild' ? 'text-green-600' : level === 'moderate' ? 'text-amber-600' : 'text-red-600'}">${d.goal}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="grid grid-cols-2 gap-3">
+      <button onclick="closeSeverityModal()" class="border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm hover:bg-gray-50 transition">ปิด</button>
+      <button onclick="${d.action}" class="${d.btnColor} text-white py-2.5 rounded-xl text-sm font-medium transition">${d.actionLabel}</button>
+    </div>`;
 
-fetchData();
+  document.getElementById('severity-modal').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeSeverityModal() {
+  document.getElementById('severity-modal').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+function applyGuideline(level) {
+  closeSeverityModal();
+  closeGuidelineModal();
+  showToast('นำแนวทาง ' + level.toUpperCase() + ' ไปใช้แล้ว ✓');
+}
+
+function alertTeam() {
+  closeSeverityModal();
+  showToast('แจ้งทีมรักษาเรียบร้อยแล้ว 🔔');
+}
+
+function showSaveSuccess() {
+  showToast('บันทึกข้อมูลสำเร็จ ✓');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-text').textContent = msg;
+  t.style.opacity = '1';
+  t.style.transform = 'translateX(-50%) translateY(0)';
+  setTimeout(() => {
+    t.style.opacity = '0';
+    t.style.transform = 'translateX(-50%) translateY(10px)';
+  }, 2800);
+}
+
+// Close modals on ESC
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeGuidelineModal(); closeSeverityModal(); }
+});
 </script>
- <!-- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9f86e4cef059731f',t:'MTc3ODIyNjgzOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body> -->
+</body>
 </html>
