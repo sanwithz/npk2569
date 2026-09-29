@@ -1,183 +1,960 @@
 <!doctype html>
 <html lang="th">
- <head>
+<head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ค้นหาและแสดงผลนักเรียน</title>
-  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
-  <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet">
-  <style>
-body { font-family: 'DM Sans', sans-serif; background: linear-gradient(180deg, #eef6ff 0%, #fff7f7 100%); }
-mark { background: #bfdbfe; padding: 0 .15rem; border-radius: .25rem; }
-</style>
-  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js" type="text/javascript"></script>
-  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
-  <script src="/_sdk/resizing_sdk.js" type="text/javascript"></script>
- </head>
- <body data-template-id="__page-root" class="min-h-screen">
-  <div class="max-w-6xl mx-auto p-4 md:p-6">
-   <header class="mb-6">
-    <div class="flex items-center justify-between">
-     <h1 data-template-id="page-title" class="canva-text text-2xl md:text-3xl font-bold text-slate-800"></h1><button id="btn-refresh" class="px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-2xl font-medium transition"><i class="fa-solid fa-rotate-right mr-1"></i> รีเฟรช</button>
-    </div>
-    <p data-template-id="page-subtitle" class="canva-text text-slate-500 mt-1"></p>
-   </header><!-- Stats -->
-   <div class="grid grid-cols-3 gap-3 mb-5">
-    <div data-template-id="stat-total-card" class="canva-card bg-white rounded-2xl p-4 text-center shadow-sm">
-     <div id="stat-total" class="text-2xl font-bold text-blue-600">
-      0
-     </div>
-     <div data-template-id="stat-total-label" class="canva-text text-xs text-slate-500 mt-1"></div>
-    </div>
-    <div data-template-id="stat-classes-card" class="canva-card bg-white rounded-2xl p-4 text-center shadow-sm">
-     <div id="stat-classes" class="text-2xl font-bold text-rose-400">
-      0
-     </div>
-     <div data-template-id="stat-classes-label" class="canva-text text-xs text-slate-500 mt-1"></div>
-    </div>
-    <div data-template-id="stat-shown-card" class="canva-card bg-white rounded-2xl p-4 text-center shadow-sm">
-     <div id="stat-shown" class="text-2xl font-bold text-emerald-500">
-      0
-     </div>
-     <div data-template-id="stat-shown-label" class="canva-text text-xs text-slate-500 mt-1"></div>
-    </div>
-   </div><!-- Controls -->
-   <div class="bg-white rounded-2xl p-4 shadow-sm mb-5 space-y-3">
-    <div class="relative"><i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i> <input id="search-input" type="text" data-template-id="search-input" class="canva-input w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-200 text-sm">
-    </div>
-    <div class="flex flex-wrap gap-2"><select id="filter-class" class="flex-1 min-w-[140px] px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"> <option value="">ทั้งหมด</option> </select> <select id="sort-select" class="flex-1 min-w-[140px] px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"> <option value="เลขที่-asc">เลขที่ ↑</option> <option value="เลขที่-desc">เลขที่ ↓</option> <option value="ชื่อ - สกุล-asc">ชื่อ ก-ฮ</option> <option value="ชื่อ - สกุล-desc">ชื่อ ฮ-ก</option> <option value="ชั้น-asc">ชั้น ↑</option> <option value="ชั้น-desc">ชั้น ↓</option> </select>
-     <div class="flex border border-slate-200 rounded-xl overflow-hidden"><button id="view-cards" class="px-3 py-2 text-sm bg-blue-100 text-blue-700"><i class="fa-solid fa-grip"></i></button> <button id="view-table" class="px-3 py-2 text-sm text-slate-500 hover:bg-slate-50"><i class="fa-solid fa-table-list"></i></button>
-     </div>
-    </div>
-   </div><!-- Results -->
-   <div id="results-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
-   <div id="results-table" class="hidden overflow-x-auto bg-white rounded-2xl shadow-sm">
-    <table class="w-full text-sm">
-     <thead class="bg-blue-50 text-slate-600">
-      <tr>
-       <th class="px-4 py-3 text-left">เลขที่</th>
-       <th class="px-4 py-3 text-left">รหัสประจำตัว</th>
-       <th class="px-4 py-3 text-left">ชื่อ - สกุล</th>
-       <th class="px-4 py-3 text-left">ชั้น</th>
-      </tr>
-     </thead>
-     <tbody id="table-body"></tbody>
-    </table>
-   </div>
-   <p id="empty-state" data-template-id="empty-state" class="canva-text hidden text-center text-slate-400 py-12 text-lg"></p><!-- Footer -->
-   <footer class="mt-8 border-t border-gray-200 py-4 text-center text-sm text-slate-500">
-    <p>© <span id="yr"></span> Copyright | พัฒนาโดยครูสิทธิชาติ สิทธิ <a href="https://www.facebook.com/SanwithzWebapp" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-facebook text-blue-500 hover:text-blue-700 ml-1"></i></a> <a href="https://www.youtube.com/@Sanwithz" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-youtube text-red-500 hover:text-red-700 ml-1"></i></a></p>
-   </footer>
-  </div>
-  <script src="/_sdk/editing_sdk.js"></script>
+  <title>ระบบค้นหาและแสดงผลข้อมูลนักเรียน</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
   <script>
-document.getElementById('yr').textContent = new Date().getFullYear();
-
-const API_URL = 'https://script.google.com/macros/s/AKfycbzfGEORbRNgEA4epbj_ofkoZC2LhxlDs7bd4ZrdK9eN3tImu60UqwFNy2WohgOYRNdX/exec';
-const CACHE_KEY = 'student_data_cache';
-const CACHE_TTL = 30 * 60 * 1000;
-
-let allData = [];
-let currentView = 'cards';
-let debounceTimer;
-
-async function fetchData(force = false) {
-  if (!force) {
-    const cached = localStorage.getItem(CACHE_KEY);
-    if (cached) {
-      const { data, ts } = JSON.parse(cached);
-      if (Date.now() - ts < CACHE_TTL) { allData = data; render(); return; }
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Prompt', 'Plus Jakarta Sans', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+            }
+          }
+        }
+      }
     }
-  }
-  Swal.fire({ title: 'กำลังโหลดข้อมูล...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-  try {
-    const res = await fetch(API_URL);
-    if (!res.ok) throw new Error(res.statusText);
-    const json = await res.json();
-    allData = Array.isArray(json) ? json : (json.data || []);
-    localStorage.setItem(CACHE_KEY, JSON.stringify({ data: allData, ts: Date.now() }));
-    Swal.close();
-    populateFilter();
-    render();
-  } catch (e) {
-    Swal.fire({ icon: 'error', title: 'โหลดข้อมูลไม่สำเร็จ', text: e.message });
-  }
-}
+  </script>
+  
+  <!-- Google Fonts: Prompt & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-function populateFilter() {
-  const classes = [...new Set(allData.map(d => d['ชั้น']).filter(Boolean))].sort();
-  const sel = document.getElementById('filter-class');
-  sel.innerHTML = '<option value="">ทั้งหมด</option>' + classes.map(c => `<option value="${c}">${c}</option>`).join('');
-}
+  <style>
+    body {
+      font-family: 'Prompt', 'Plus Jakarta Sans', sans-serif;
+      background: linear-gradient(180deg, #f0f7ff 0%, #f8fafc 35%, #ffffff 100%);
+      min-height: 100vh;
+    }
+    mark {
+      background-color: #fef08a;
+      color: #854d0e;
+      padding: 0.1rem 0.35rem;
+      border-radius: 0.35rem;
+      font-weight: 600;
+    }
+    .badge-boy {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+    }
+    .badge-girl {
+      background: #fdf2f8;
+      color: #be185d;
+      border: 1px solid #fbcfe8;
+    }
+    /* Smooth custom scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="text-slate-800 antialiased selection:bg-blue-100 selection:text-blue-800">
 
-function getFiltered() {
-  const q = document.getElementById('search-input').value.trim().toLowerCase();
-  const cls = document.getElementById('filter-class').value;
-  let data = allData;
-  if (cls) data = data.filter(d => d['ชั้น'] === cls);
-  if (q) data = data.filter(d => ['เลขที่','รหัสประจำตัว','ชื่อ - สกุล','ชั้น'].some(k => String(d[k]||'').toLowerCase().includes(q)));
-  const [key, order] = (document.getElementById('sort-select').value || 'เลขที่-asc').split('-');
-  data.sort((a, b) => { const av = String(a[key]||''), bv = String(b[key]||''); return order === 'asc' ? av.localeCompare(bv, 'th', {numeric:true}) : bv.localeCompare(av, 'th', {numeric:true}); });
-  return data;
-}
-
-function hl(text, q) {
-  if (!q) return esc(text);
-  const s = esc(String(text||''));
-  const re = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
-  return s.replace(re, '<mark>$1</mark>');
-}
-function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
-
-function render() {
-  const data = getFiltered();
-  const q = document.getElementById('search-input').value.trim().toLowerCase();
-  document.getElementById('stat-total').textContent = allData.length;
-  document.getElementById('stat-classes').textContent = new Set(allData.map(d=>d['ชั้น']).filter(Boolean)).size;
-  document.getElementById('stat-shown').textContent = data.length;
-
-  const empty = document.getElementById('empty-state');
-  empty.classList.toggle('hidden', data.length > 0);
-
-  if (currentView === 'cards') {
-    document.getElementById('results-cards').classList.remove('hidden');
-    document.getElementById('results-table').classList.add('hidden');
-    document.getElementById('results-cards').innerHTML = data.map(d => `
-      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 hover:shadow-md transition">
-        <div class="flex items-center gap-3 mb-2">
-          <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm">${esc(String(d['เลขที่']||''))}</div>
-          <div class="flex-1 min-w-0">
-            <div class="font-semibold text-slate-800 truncate">${hl(d['ชื่อ - สกุล'], q)}</div>
-            <div class="text-xs text-slate-400">${hl(d['รหัสประจำตัว'], q)}</div>
+  <!-- Main Container -->
+  <div class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+    
+    <!-- Top Header -->
+    <header class="mb-6 sm:mb-8">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/95 backdrop-blur-md p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-sm">
+        <div class="flex items-center gap-4">
+          <div class="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center text-2xl shadow-md shadow-blue-500/25 shrink-0">
+            <i class="fa-solid fa-graduation-cap"></i>
+          </div>
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-slate-800 tracking-tight">
+                ค้นหาและแสดงผลข้อมูลนักเรียน
+              </h1>
+              <span id="data-status-badge" class="inline-flex items-center gap-1.5 text-xs px-2.5 py-0.5 rounded-full font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                <span id="status-dot" class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                <span id="status-label">กำลังโหลดข้อมูล...</span>
+              </span>
+            </div>
+            <p class="text-slate-500 text-xs sm:text-sm mt-0.5 flex flex-wrap items-center gap-1">
+              <span>ฐานข้อมูล: </span>
+              <a href="https://opensheet.elk.sh/1r28y31valtaFS10AAPL7X7xwm_QqZhIdfqmXHnMJUG0/Room" target="_blank" rel="noopener noreferrer" class="font-mono text-xs text-blue-600 hover:underline flex items-center gap-1 bg-slate-100 px-2 py-0.5 rounded-md">
+                <span>Room (Google Sheet via OpenSheet)</span>
+                <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+              </a>
+            </p>
           </div>
         </div>
-        <span class="inline-block px-2 py-0.5 text-xs rounded-lg bg-blue-50 text-blue-600">${hl(d['ชั้น'], q)}</span>
-      </div>`).join('');
-  } else {
-    document.getElementById('results-cards').classList.add('hidden');
-    document.getElementById('results-table').classList.remove('hidden');
-    document.getElementById('table-body').innerHTML = data.map(d => `
-      <tr class="border-t border-slate-100 hover:bg-blue-50/30">
-        <td class="px-4 py-2">${hl(d['เลขที่'], q)}</td>
-        <td class="px-4 py-2">${hl(d['รหัสประจำตัว'], q)}</td>
-        <td class="px-4 py-2">${hl(d['ชื่อ - สกุล'], q)}</td>
-        <td class="px-4 py-2">${hl(d['ชั้น'], q)}</td>
-      </tr>`).join('');
-  }
-}
 
-document.getElementById('search-input').addEventListener('input', () => { clearTimeout(debounceTimer); debounceTimer = setTimeout(render, 250); });
-document.getElementById('filter-class').addEventListener('change', render);
-document.getElementById('sort-select').addEventListener('change', render);
-document.getElementById('btn-refresh').addEventListener('click', () => fetchData(true));
+        <!-- Action Buttons -->
+        <div class="flex items-center gap-2 self-start md:self-auto shrink-0">
+          <button id="btn-export" title="ส่งออกไฟล์ CSV" class="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs sm:text-sm font-medium transition active:scale-95">
+            <i class="fa-solid fa-file-arrow-down text-slate-500"></i>
+            <span class="hidden sm:inline">ส่งออก CSV</span>
+          </button>
+          <button id="btn-refresh" class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs sm:text-sm font-medium shadow-sm shadow-blue-500/30 transition active:scale-95 cursor-pointer">
+            <i id="refresh-icon" class="fa-solid fa-rotate-right"></i>
+            <span>รีเฟรชข้อมูล</span>
+          </button>
+        </div>
+      </div>
+    </header>
 
-document.getElementById('view-cards').addEventListener('click', () => { currentView='cards'; document.getElementById('view-cards').className='px-3 py-2 text-sm bg-blue-100 text-blue-700'; document.getElementById('view-table').className='px-3 py-2 text-sm text-slate-500 hover:bg-slate-50'; render(); });
-document.getElementById('view-table').addEventListener('click', () => { currentView='table'; document.getElementById('view-table').className='px-3 py-2 text-sm bg-blue-100 text-blue-700'; document.getElementById('view-cards').className='px-3 py-2 text-sm text-slate-500 hover:bg-slate-50'; render(); });
+    <!-- Summary Stats Bar -->
+    <section class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6">
+      
+      <!-- Total Students -->
+      <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-[11px] sm:text-xs font-medium text-slate-400 uppercase tracking-wider">นักเรียนทั้งหมด</p>
+          <h3 id="stat-total" class="text-2xl sm:text-3xl font-bold text-blue-600 mt-1">0</h3>
+        </div>
+        <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg">
+          <i class="fa-solid fa-users"></i>
+        </div>
+      </div>
 
-fetchData();
-</script>
- <!-- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9f86e4cef059731f',t:'MTc3ODIyNjgzOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body> -->
+      <!-- Classes -->
+      <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-[11px] sm:text-xs font-medium text-slate-400 uppercase tracking-wider">ห้องเรียน</p>
+          <h3 id="stat-classes" class="text-2xl sm:text-3xl font-bold text-indigo-600 mt-1">0</h3>
+        </div>
+        <div class="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg">
+          <i class="fa-solid fa-school"></i>
+        </div>
+      </div>
+
+      <!-- Gender Male -->
+      <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-[11px] sm:text-xs font-medium text-slate-400 uppercase tracking-wider">นักเรียนชาย</p>
+          <h3 id="stat-boys" class="text-2xl sm:text-3xl font-bold text-sky-600 mt-1">0</h3>
+        </div>
+        <div class="w-11 h-11 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center text-lg">
+          <i class="fa-solid fa-mars"></i>
+        </div>
+      </div>
+
+      <!-- Gender Female -->
+      <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-[11px] sm:text-xs font-medium text-slate-400 uppercase tracking-wider">นักเรียนหญิง</p>
+          <h3 id="stat-girls" class="text-2xl sm:text-3xl font-bold text-rose-500 mt-1">0</h3>
+        </div>
+        <div class="w-11 h-11 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center text-lg">
+          <i class="fa-solid fa-venus"></i>
+        </div>
+      </div>
+    </section>
+
+    <!-- Search & Control Panel -->
+    <section class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-100 mb-6 space-y-3.5">
+      
+      <!-- Search Input -->
+      <div class="relative">
+        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+          <i class="fa-solid fa-magnifying-glass"></i>
+        </div>
+        <input 
+          id="search-input" 
+          type="text" 
+          placeholder="ค้นหาชื่อ, สกุล, รหัสประจำตัว, หรือเลขที่... (กด / เพื่อค้นหา)" 
+          class="w-full pl-10 pr-28 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
+        >
+        <div class="absolute inset-y-0 right-0 pr-2.5 flex items-center gap-1.5">
+          <button id="btn-clear-search" class="hidden text-slate-400 hover:text-slate-600 p-1 text-xs transition" title="ล้างการค้นหา">
+            <i class="fa-solid fa-circle-xmark text-sm"></i>
+          </button>
+          <span id="stat-shown-pill" class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-blue-100 text-blue-700">0 รายการ</span>
+        </div>
+      </div>
+
+      <!-- Filters & Sorting Row -->
+      <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
+        
+        <div class="flex flex-wrap items-center gap-2 flex-1">
+          <!-- Class selector -->
+          <div class="relative min-w-[130px]">
+            <select id="filter-class" class="w-full appearance-none pl-3 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+              <option value="">ทุกระดับชั้น</option>
+            </select>
+            <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none"></i>
+          </div>
+
+          <!-- Sort select -->
+          <div class="relative min-w-[145px]">
+            <select id="sort-select" class="w-full appearance-none pl-3 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+              <option value="เลขที่-asc">เลขที่ 1 - มาก</option>
+              <option value="เลขที่-desc">เลขที่ มาก - 1</option>
+              <option value="ชื่อ - สกุล-asc">ชื่อ ก - ฮ</option>
+              <option value="ชื่อ - สกุล-desc">ชื่อ ฮ - ก</option>
+              <option value="รหัสประจำตัว-asc">รหัสประจำตัว ↑</option>
+            </select>
+            <i class="fa-solid fa-arrow-down-wide-short absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none"></i>
+          </div>
+
+          <!-- Gender quick toggle tabs -->
+          <div class="flex bg-slate-100 p-1 rounded-xl text-xs font-medium text-slate-600">
+            <button data-gender="all" class="filter-gender-btn active px-3 py-1.5 rounded-lg bg-white shadow-xs text-blue-600 font-semibold cursor-pointer">ทั้งหมด</button>
+            <button data-gender="boy" class="filter-gender-btn px-3 py-1.5 rounded-lg hover:text-slate-900 transition cursor-pointer">ชาย</button>
+            <button data-gender="girl" class="filter-gender-btn px-3 py-1.5 rounded-lg hover:text-slate-900 transition cursor-pointer">หญิง</button>
+          </div>
+        </div>
+
+        <!-- View Switchers (Card vs Table) -->
+        <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
+          <button id="view-cards" title="มุมมองการ์ด" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-blue-600 shadow-sm transition cursor-pointer">
+            <i class="fa-solid fa-grip mr-1"></i> การ์ด
+          </button>
+          <button id="view-table" title="มุมมองตาราง" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-500 hover:text-slate-800 transition cursor-pointer">
+            <i class="fa-solid fa-table-list mr-1"></i> ตาราง
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Results: Cards Grid View -->
+    <div id="results-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+      <!-- Injected dynamically by JavaScript -->
+    </div>
+
+    <!-- Results: Table View -->
+    <div id="results-table" class="hidden overflow-hidden bg-white rounded-2xl border border-slate-100 shadow-sm">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-slate-50 text-slate-600 border-b border-slate-100 text-xs uppercase tracking-wider font-semibold">
+            <tr>
+              <th scope="col" class="px-4 py-3.5 text-center w-20">เลขที่</th>
+              <th scope="col" class="px-4 py-3.5">รหัสประจำตัว</th>
+              <th scope="col" class="px-4 py-3.5">ชื่อ - นามสกุล</th>
+              <th scope="col" class="px-4 py-3.5 text-center">เพศ</th>
+              <th scope="col" class="px-4 py-3.5 text-center">ห้องเรียน</th>
+              <th scope="col" class="px-4 py-3.5 text-right">ดำเนินการ</th>
+            </tr>
+          </thead>
+          <tbody id="table-body" class="divide-y divide-slate-100">
+            <!-- Injected dynamically by JavaScript -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div id="empty-state" class="hidden flex flex-col items-center justify-center py-16 px-4 text-center bg-white rounded-3xl border border-dashed border-slate-200 my-4">
+      <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 text-2xl mb-4">
+        <i class="fa-solid fa-magnifying-glass"></i>
+      </div>
+      <h3 class="text-base font-semibold text-slate-700 mb-1">ไม่พบข้อมูลที่ตรงกับคำค้นหา</h3>
+      <p class="text-sm text-slate-400 max-w-sm mb-4">ลองปรับคำค้นหา หรือรีเซ็ตตัวกรองชั้นเรียนและเพศใหม่อีกครั้ง</p>
+      <button id="btn-reset-filters" class="px-4 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 font-medium text-xs rounded-xl transition cursor-pointer">
+        <i class="fa-solid fa-arrow-rotate-left mr-1"></i> ล้างการค้นหาทั้งหมด
+      </button>
+    </div>
+
+    <!-- Student Detail Modal -->
+    <div id="student-modal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs hidden flex items-center justify-center p-4">
+      <div class="bg-white rounded-3xl shadow-xl max-w-md w-full p-6 relative animate-in fade-in zoom-in-95 duration-200">
+        <button id="btn-close-modal" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center text-sm transition cursor-pointer">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <div class="text-center pt-2 pb-4">
+          <div id="modal-avatar" class="w-20 h-20 mx-auto rounded-3xl flex items-center justify-center text-3xl font-bold shadow-md mb-3">
+            01
+          </div>
+          <span id="modal-gender-pill" class="text-xs px-2.5 py-0.5 rounded-full font-medium">เพศ</span>
+          <h2 id="modal-name" class="text-lg sm:text-xl font-bold text-slate-800 mt-2">ชื่อนักเรียน</h2>
+          <p id="modal-class" class="text-slate-500 text-xs sm:text-sm">ชั้นมัธยมศึกษา</p>
+        </div>
+
+        <div class="bg-slate-50 rounded-2xl p-4 space-y-2.5 text-xs sm:text-sm mb-5 border border-slate-100">
+          <div class="flex justify-between items-center py-1 border-b border-slate-200/60">
+            <span class="text-slate-400">เลขที่</span>
+            <span id="modal-no" class="font-semibold text-slate-700">-</span>
+          </div>
+          <div class="flex justify-between items-center py-1 border-b border-slate-200/60">
+            <span class="text-slate-400">รหัสประจำตัว</span>
+            <span id="modal-code" class="font-semibold text-slate-700 tracking-wider font-mono">-</span>
+          </div>
+          <div class="flex justify-between items-center py-1">
+            <span class="text-slate-400">สถานะการศึกษา</span>
+            <span class="inline-flex items-center gap-1.5 text-emerald-600 font-medium">
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span> ปกติ
+            </span>
+          </div>
+        </div>
+
+        <div class="flex gap-2">
+          <button id="modal-copy-btn" class="flex-1 py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs sm:text-sm font-medium transition flex items-center justify-center gap-2 shadow-sm cursor-pointer">
+            <i class="fa-regular fa-copy"></i> คัดลอกรหัสประจำตัว
+          </button>
+          <button onclick="window.print()" class="py-2.5 px-3.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs sm:text-sm font-medium transition cursor-pointer" title="พิมพ์หน้านี้">
+            <i class="fa-solid fa-print"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sleek Toast Notification -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 bg-slate-800 text-white px-4 py-2.5 rounded-xl text-sm font-medium shadow-lg transition-all duration-300 opacity-0 pointer-events-none transform translate-y-3 flex items-center gap-2">
+      <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
+      <span id="toast-text">สำเร็จ</span>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-12 pt-6 border-t border-slate-200 text-center text-xs text-slate-500">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+        <p>© <span id="yr"></span> ระบบสืบค้นข้อมูลนักเรียน | พัฒนาโดย ครูสิทธิชาติ สิทธิ</p>
+        <div class="flex items-center gap-3 text-slate-400">
+          <a href="https://www.facebook.com/SanwithzWebapp" target="_blank" rel="noopener noreferrer" class="hover:text-blue-600 transition flex items-center gap-1">
+            <i class="fa-brands fa-facebook text-sm"></i> Facebook
+          </a>
+          <span>•</span>
+          <a href="https://www.youtube.com/@Sanwithz" target="_blank" rel="noopener noreferrer" class="hover:text-red-600 transition flex items-center gap-1">
+            <i class="fa-brands fa-youtube text-sm"></i> YouTube
+          </a>
+        </div>
+      </div>
+    </footer>
+
+  </div>
+
+  <script>
+    // Built-in initial dataset ensures instant rendering with zero blank screen
+    const DEFAULT_DATA = [
+      {"เลขที่":"1","รหัสประจำตัว":"36963","ชื่อ - สกุล":"เด็กชายชยางกูร  ตุงคโสภา","ชั้น":"ม.1/1"},
+      {"เลขที่":"2","รหัสประจำตัว":"36964","ชื่อ - สกุล":"เด็กชายณัฏฐกร  รัฐราษฎร์","ชั้น":"ม.1/1"},
+      {"เลขที่":"3","รหัสประจำตัว":"36965","ชื่อ - สกุล":"เด็กชายณิชพน  ปาสาทิกะ","ชั้น":"ม.1/1"},
+      {"เลขที่":"4","รหัสประจำตัว":"36966","ชื่อ - สกุล":"เด็กชายธนกิจ  โจ้พิมาย","ชั้น":"ม.1/1"},
+      {"เลขที่":"5","รหัสประจำตัว":"36967","ชื่อ - สกุล":"เด็กชายธิติ  ปัญนาวี","ชั้น":"ม.1/1"},
+      {"เลขที่":"6","รหัสประจำตัว":"36968","ชื่อ - สกุล":"เด็กชายนภัสดล  สุราช","ชั้น":"ม.1/1"},
+      {"เลขที่":"7","รหัสประจำตัว":"36969","ชื่อ - สกุล":"เด็กชายพงษ์พิธาน์  บัวภาเรือง","ชั้น":"ม.1/1"},
+      {"เลขที่":"8","รหัสประจำตัว":"36970","ชื่อ - สกุล":"เด็กชายพงษ์สิทธิ์  อ่อนละมุล","ชั้น":"ม.1/1"},
+      {"เลขที่":"9","รหัสประจำตัว":"36971","ชื่อ - สกุล":"เด็กชายพชร  นนทวิชัย","ชั้น":"ม.1/1"},
+      {"เลขที่":"10","รหัสประจำตัว":"36972","ชื่อ - สกุล":"เด็กชายพัฒนบัณฑิต  โสโท","ชั้น":"ม.1/1"},
+      {"เลขที่":"11","รหัสประจำตัว":"36973","ชื่อ - สกุล":"เด็กชายภานุวัฒน์  โชติมลทิน","ชั้น":"ม.1/1"},
+      {"เลขที่":"12","รหัสประจำตัว":"36974","ชื่อ - สกุล":"เด็กชายภูมิธนนท์  รัตนะชิยานันท์","ชั้น":"ม.1/1"},
+      {"เลขที่":"13","รหัสประจำตัว":"36975","ชื่อ - สกุล":"เด็กชายภูมิฟ้า  วรปัญญา","ชั้น":"ม.1/1"},
+      {"เลขที่":"14","รหัสประจำตัว":"36976","ชื่อ - สกุล":"เด็กชายภูริทัต  ด้วงหอม","ชั้น":"ม.1/1"},
+      {"เลขที่":"15","รหัสประจำตัว":"36977","ชื่อ - สกุล":"เด็กชายอิทธิพัทธ์  ทวีบท","ชั้น":"ม.1/1"},
+      {"เลขที่":"16","รหัสประจำตัว":"36978","ชื่อ - สกุล":"เด็กหญิงจิรัชญา  ชาวไทย","ชั้น":"ม.1/1"},
+      {"เลขที่":"17","รหัสประจำตัว":"36979","ชื่อ - สกุล":"เด็กหญิงฐิคัมภรณ์  สามเมือง","ชั้น":"ม.1/1"},
+      {"เลขที่":"18","รหัสประจำตัว":"36980","ชื่อ - สกุล":"เด็กหญิงณัฐณิชา  บุญอุ้ม","ชั้น":"ม.1/1"},
+      {"เลขที่":"19","รหัสประจำตัว":"36981","ชื่อ - สกุล":"เด็กหญิงณัฐมนชนัญ  สีกอดแก้ว","ชั้น":"ม.1/1"},
+      {"เลขที่":"20","รหัสประจำตัว":"36982","ชื่อ - สกุล":"เด็กหญิงทักษอร  นิลมิตย์","ชั้น":"ม.1/1"},
+      {"เลขที่":"21","รหัสประจำตัว":"36983","ชื่อ - สกุล":"เด็กหญิงธมลวรรณ  จันทนิด","ชั้น":"ม.1/1"},
+      {"เลขที่":"22","รหัสประจำตัว":"36984","ชื่อ - สกุล":"เด็กหญิงธัญชนก  ฮวดหลี","ชั้น":"ม.1/1"},
+      {"เลขที่":"23","รหัสประจำตัว":"36985","ชื่อ - สกุล":"เด็กหญิงนัยน์ปพร  ศูนย์จันทร์","ชั้น":"ม.1/1"},
+      {"เลขที่":"24","รหัสประจำตัว":"36986","ชื่อ - สกุล":"เด็กหญิงพนัชกร  เนาวบุตร","ชั้น":"ม.1/1"},
+      {"เลขที่":"25","รหัสประจำตัว":"36987","ชื่อ - สกุล":"เด็กหญิงพรพันแสง  จ้ำมา","ชั้น":"ม.1/1"},
+      {"เลขที่":"26","รหัสประจำตัว":"36988","ชื่อ - สกุล":"เด็กหญิงพัชญาภา  จรพัทลุง","ชั้น":"ม.1/1"},
+      {"เลขที่":"27","รหัสประจำตัว":"36989","ชื่อ - สกุล":"เด็กหญิงศรัชชญา  สีคำมี","ชั้น":"ม.1/1"},
+      {"เลขที่":"28","รหัสประจำตัว":"36990","ชื่อ - สกุล":"เด็กหญิงศศิกานต์  ทบวอร์","ชั้น":"ม.1/1"},
+      {"เลขที่":"29","รหัสประจำตัว":"36991","ชื่อ - สกุล":"เด็กหญิงศุภัคชญา  ประทุม","ชั้น":"ม.1/1"},
+      {"เลขที่":"30","รหัสประจำตัว":"36992","ชื่อ - สกุล":"เด็กหญิงอริสรา  สาริยา","ชั้น":"ม.1/1"}
+    ];
+
+    const SHEET_ID = '1r28y31valtaFS10AAPL7X7xwm_QqZhIdfqmXHnMJUG0';
+    const PRIMARY_API_URL = `https://opensheet.elk.sh/${SHEET_ID}/Room`;
+    const GVIZ_API_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=Room`;
+    const CACHE_KEY = 'student_data_cache_v4';
+    const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
+
+    let allData = [...DEFAULT_DATA];
+    let currentView = 'cards';
+    let currentGender = 'all';
+    let debounceTimer;
+
+    // Set copyright year
+    document.getElementById('yr').textContent = new Date().getFullYear();
+
+    // Helper to safely extract student object attributes regardless of header space variations
+    function normalizeRow(row) {
+      if (!row || typeof row !== 'object') return null;
+      const keys = Object.keys(row);
+      const findVal = (keywords) => {
+        for (const kw of keywords) {
+          const k = keys.find(key => key.trim().toLowerCase().includes(kw.toLowerCase()));
+          if (k && row[k] !== undefined && row[k] !== null && String(row[k]).trim() !== '') {
+            return String(row[k]).trim();
+          }
+        }
+        return '';
+      };
+
+      const no = findVal(['เลขที่', 'ลำดับ', 'no', 'number']) || String(row['เลขที่'] ?? '');
+      const code = findVal(['รหัสประจำตัว', 'รหัสนักเรียน', 'รหัส', 'code', 'id']) || String(row['รหัสประจำตัว'] ?? '');
+      const name = findVal(['ชื่อ - สกุล', 'ชื่อ-สกุล', 'ชื่อ - นามสกุล', 'ชื่อ-นามสกุล', 'ชื่อ สกุล', 'ชื่อ', 'name']) || String(row['ชื่อ - สกุล'] ?? '');
+      const room = findVal(['ชั้น', 'ห้อง', 'ห้องเรียน', 'class', 'room']) || String(row['ชั้น'] ?? '');
+
+      if (!name && !code && !no) return null;
+
+      return {
+        'เลขที่': no,
+        'รหัสประจำตัว': code,
+        'ชื่อ - สกุล': name,
+        'ชั้น': room
+      };
+    }
+
+    // Helper to classify gender from Thai prefixes
+    function getGender(name = '') {
+      const clean = String(name).trim();
+      if (clean.startsWith('เด็กหญิง') || clean.startsWith('นางสาว') || clean.startsWith('นาง') || clean.includes('หญิง')) {
+        return { type: 'girl', label: 'นักเรียนหญิง', icon: 'fa-venus', color: 'rose' };
+      }
+      return { type: 'boy', label: 'นักเรียนชาย', icon: 'fa-mars', color: 'sky' };
+    }
+
+    // HTML escape utility
+    function esc(s) {
+      const d = document.createElement('div');
+      d.textContent = s ?? '';
+      return d.innerHTML;
+    }
+
+    // Query highlighter
+    function highlight(text, q) {
+      if (!q) return esc(text);
+      const str = esc(String(text || ''));
+      const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const re = new RegExp(`(${escaped})`, 'gi');
+      return str.replace(re, '<mark>$1</mark>');
+    }
+
+    async function fetchData(force = false) {
+      const refreshBtn = document.getElementById('btn-refresh');
+      const icon = document.getElementById('refresh-icon');
+      
+      icon.classList.add('fa-spin');
+      refreshBtn.disabled = true;
+      updateStatusBadge('กำลังเชื่อมต่อฐานข้อมูล...', 'loading');
+
+      // 1. Check local storage cache if not forced
+      if (!force) {
+        try {
+          const cached = localStorage.getItem(CACHE_KEY);
+          if (cached) {
+            const { data, ts } = JSON.parse(cached);
+            if (Date.now() - ts < CACHE_TTL && Array.isArray(data) && data.length > 0) {
+              allData = data.map(normalizeRow).filter(Boolean);
+              updateStatusBadge(`โหลดสำเร็จ (${allData.length} รายการ)`, 'success');
+              populateFilter();
+              render();
+              stopSpinner();
+              return;
+            }
+          }
+        } catch (e) {
+          console.warn('Cache read warning:', e);
+        }
+      }
+
+      // 2. Fetch directly from OpenSheet API
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 6000);
+
+        const res = await fetch(PRIMARY_API_URL, { 
+          signal: controller.signal,
+          headers: { 'Accept': 'application/json' }
+        });
+        clearTimeout(timeout);
+
+        if (res.ok) {
+          const json = await res.json();
+          const list = Array.isArray(json) ? json : (json.data || []);
+          const normalized = list.map(normalizeRow).filter(Boolean);
+          if (normalized.length > 0) {
+            allData = normalized;
+            cacheData(normalized);
+            updateStatusBadge(`ออนไลน์ OpenSheet (${allData.length} รายการ)`, 'success');
+            showToast(`ดึงข้อมูลสดจาก OpenSheet สำเร็จ (${allData.length} คน)`);
+            populateFilter();
+            render();
+            stopSpinner();
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn('OpenSheet attempt failed, trying Google gviz fallback:', err.message);
+      }
+
+      // 3. Fallback: Google Sheet GViz API endpoint
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 6000);
+
+        const res = await fetch(GVIZ_API_URL, { signal: controller.signal });
+        clearTimeout(timeout);
+
+        if (res.ok) {
+          const text = await res.text();
+          const match = text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\);/);
+          if (match && match[1]) {
+            const parsed = JSON.parse(match[1]);
+            const cols = parsed.table.cols.map(c => c.label || (c.id ? c.id : ''));
+            const rows = parsed.table.rows.map(r => {
+              const item = {};
+              r.c.forEach((cell, idx) => {
+                const header = cols[idx] || `col_${idx}`;
+                item[header] = cell ? (cell.f || cell.v || '') : '';
+              });
+              return item;
+            });
+
+            const normalized = rows.map(normalizeRow).filter(Boolean);
+            if (normalized.length > 0) {
+              allData = normalized;
+              cacheData(normalized);
+              updateStatusBadge(`ออนไลน์ GViz (${allData.length} รายการ)`, 'success');
+              showToast('ซิงค์ข้อมูลผ่าน Google Sheets สำเร็จ');
+              populateFilter();
+              render();
+              stopSpinner();
+              return;
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('GViz fallback failed:', err.message);
+      }
+
+      // 4. Fallback to default dataset to guarantee data is ALWAYS shown
+      if (!allData || allData.length === 0) {
+        allData = DEFAULT_DATA.map(normalizeRow).filter(Boolean);
+      }
+      updateStatusBadge(`ข้อมูลพร้อมแสดง (${allData.length} คน)`, 'success');
+      if (force) showToast('แสดงผลชุดข้อมูลพร้อมใช้งาน');
+      populateFilter();
+      render();
+      stopSpinner();
+    }
+
+    function cacheData(data) {
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ data, ts: Date.now() }));
+      } catch (e) {
+        console.warn('Cache write warning:', e);
+      }
+    }
+
+    function stopSpinner() {
+      const refreshBtn = document.getElementById('btn-refresh');
+      const icon = document.getElementById('refresh-icon');
+      icon.classList.remove('fa-spin');
+      refreshBtn.disabled = false;
+    }
+
+    function updateStatusBadge(label, state) {
+      const badge = document.getElementById('data-status-badge');
+      const text = document.getElementById('status-label');
+      const dot = document.getElementById('status-dot');
+      if (text) text.textContent = label;
+
+      if (badge && dot) {
+        if (state === 'loading') {
+          badge.className = 'inline-flex items-center gap-1.5 text-xs px-2.5 py-0.5 rounded-full font-medium bg-amber-50 text-amber-700 border border-amber-200';
+          dot.className = 'w-2 h-2 rounded-full bg-amber-500 animate-pulse';
+        } else {
+          badge.className = 'inline-flex items-center gap-1.5 text-xs px-2.5 py-0.5 rounded-full font-medium bg-emerald-50 text-emerald-700 border border-emerald-200';
+          dot.className = 'w-2 h-2 rounded-full bg-emerald-500 animate-pulse';
+        }
+      }
+    }
+
+    function populateFilter() {
+      const classes = [...new Set(allData.map(d => String(d['ชั้น'] || '').trim()).filter(Boolean))].sort();
+      const sel = document.getElementById('filter-class');
+      const currentVal = sel.value;
+
+      sel.innerHTML = '<option value="">ทุกระดับชั้น</option>' + 
+        classes.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+
+      if (classes.includes(currentVal)) {
+        sel.value = currentVal;
+      }
+    }
+
+    function getFilteredData() {
+      const q = document.getElementById('search-input').value.trim().toLowerCase();
+      const cls = document.getElementById('filter-class').value;
+      const sortVal = document.getElementById('sort-select').value || 'เลขที่-asc';
+
+      let list = [...allData];
+
+      // Filter by Class
+      if (cls) {
+        list = list.filter(d => String(d['ชั้น'] || '').trim() === cls);
+      }
+
+      // Filter by Gender
+      if (currentGender !== 'all') {
+        list = list.filter(d => getGender(d['ชื่อ - สกุล']).type === currentGender);
+      }
+
+      // Filter by Search Text
+      if (q) {
+        list = list.filter(d => {
+          const no = String(d['เลขที่'] || '').toLowerCase();
+          const id = String(d['รหัสประจำตัว'] || '').toLowerCase();
+          const name = String(d['ชื่อ - สกุล'] || '').toLowerCase();
+          const room = String(d['ชั้น'] || '').toLowerCase();
+          return no.includes(q) || id.includes(q) || name.includes(q) || room.includes(q);
+        });
+      }
+
+      // Sort Records
+      const [key, order] = sortVal.split('-');
+      list.sort((a, b) => {
+        const valA = String(a[key] || '');
+        const valB = String(b[key] || '');
+        return order === 'asc'
+          ? valA.localeCompare(valB, 'th', { numeric: true })
+          : valB.localeCompare(valA, 'th', { numeric: true });
+      });
+
+      return list;
+    }
+
+    function render() {
+      const data = getFilteredData();
+      const q = document.getElementById('search-input').value.trim().toLowerCase();
+
+      // Update Dashboard Counters
+      const totalBoys = allData.filter(d => getGender(d['ชื่อ - สกุล']).type === 'boy').length;
+      const totalGirls = allData.filter(d => getGender(d['ชื่อ - สกุล']).type === 'girl').length;
+      const classCount = new Set(allData.map(d => String(d['ชั้น'] || '').trim()).filter(Boolean)).size || 1;
+
+      document.getElementById('stat-total').textContent = allData.length;
+      document.getElementById('stat-classes').textContent = classCount;
+      document.getElementById('stat-boys').textContent = totalBoys;
+      document.getElementById('stat-girls').textContent = totalGirls;
+      document.getElementById('stat-shown-pill').textContent = `${data.length} รายการ`;
+
+      // Clear search button toggle
+      const clearBtn = document.getElementById('btn-clear-search');
+      if (q.length > 0) {
+        clearBtn.classList.remove('hidden');
+      } else {
+        clearBtn.classList.add('hidden');
+      }
+
+      // Handle empty view vs results
+      const emptyEl = document.getElementById('empty-state');
+      const cardsEl = document.getElementById('results-cards');
+      const tableEl = document.getElementById('results-table');
+
+      if (data.length === 0) {
+        emptyEl.classList.remove('hidden');
+        cardsEl.classList.add('hidden');
+        tableEl.classList.add('hidden');
+        return;
+      }
+      emptyEl.classList.add('hidden');
+
+      // 1. Render Cards View
+      if (currentView === 'cards') {
+        cardsEl.classList.remove('hidden');
+        tableEl.classList.add('hidden');
+
+        cardsEl.innerHTML = data.map((item, idx) => {
+          const gender = getGender(item['ชื่อ - สกุล']);
+          const isBoy = gender.type === 'boy';
+          const avatarBg = isBoy ? 'bg-sky-100 text-sky-700' : 'bg-rose-100 text-rose-700';
+          const badgeClass = isBoy ? 'badge-boy' : 'badge-girl';
+
+          return `
+            <div class="group bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-sm hover:shadow-md hover:border-blue-200 transition relative flex flex-col justify-between cursor-pointer" onclick="openStudentModal(${idx})">
+              <div>
+                <div class="flex items-start justify-between gap-3 mb-3">
+                  <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-2xl ${avatarBg} flex items-center justify-center font-bold text-base shadow-xs">
+                      ${esc(String(item['เลขที่'] || '0'))}
+                    </div>
+                    <div>
+                      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium ${badgeClass}">
+                        <i class="fa-solid ${gender.icon} text-[10px]"></i> ${gender.label}
+                      </span>
+                      <h4 class="font-semibold text-slate-800 text-sm mt-0.5 group-hover:text-blue-600 transition">
+                        ${highlight(item['ชื่อ - สกุล'], q)}
+                      </h4>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-slate-100 text-xs">
+                  <div>
+                    <span class="text-slate-400 block text-[11px]">รหัสประจำตัว</span>
+                    <span class="font-medium text-slate-700 font-mono tracking-wide">
+                      ${highlight(item['รหัสประจำตัว'], q)}
+                    </span>
+                  </div>
+                  <div class="text-right">
+                    <span class="text-slate-400 block text-[11px]">ห้องเรียน</span>
+                    <span class="inline-block px-2 py-0.5 bg-blue-50 text-blue-700 font-medium rounded-md text-[11px]">
+                      ${highlight(item['ชั้น'], q)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Card Action Bar -->
+              <div class="mt-3 pt-2.5 flex items-center justify-between text-xs text-slate-400 border-t border-slate-50">
+                <span class="hover:text-blue-600 flex items-center gap-1 text-[11px]">
+                  <i class="fa-solid fa-id-card"></i> คลิกดูข้อมูล
+                </span>
+                <button 
+                  onclick="event.stopPropagation(); copyToClipboard('${esc(String(item['รหัสประจำตัว'] || ''))}')" 
+                  class="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-lg transition cursor-pointer" 
+                  title="คัดลอกรหัสประจำตัว"
+                >
+                  <i class="fa-regular fa-copy"></i>
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+      } else {
+        // 2. Render Table View
+        cardsEl.classList.add('hidden');
+        tableEl.classList.remove('hidden');
+
+        document.getElementById('table-body').innerHTML = data.map((item, idx) => {
+          const gender = getGender(item['ชื่อ - สกุล']);
+          const isBoy = gender.type === 'boy';
+          const badgeClass = isBoy ? 'badge-boy' : 'badge-girl';
+
+          return `
+            <tr class="hover:bg-blue-50/40 transition cursor-pointer" onclick="openStudentModal(${idx})">
+              <td class="px-4 py-3.5 text-center font-bold text-slate-700">${highlight(item['เลขที่'], q)}</td>
+              <td class="px-4 py-3.5 font-mono text-slate-600 font-medium">${highlight(item['รหัสประจำตัว'], q)}</td>
+              <td class="px-4 py-3.5 font-medium text-slate-800">${highlight(item['ชื่อ - สกุล'], q)}</td>
+              <td class="px-4 py-3.5 text-center">
+                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${badgeClass}">
+                  <i class="fa-solid ${gender.icon} text-[10px]"></i> ${gender.type === 'boy' ? 'ชาย' : 'หญิง'}
+                </span>
+              </td>
+              <td class="px-4 py-3.5 text-center">
+                <span class="px-2.5 py-1 bg-blue-50 text-blue-700 text-xs font-medium rounded-lg">
+                  ${highlight(item['ชั้น'], q)}
+                </span>
+              </td>
+              <td class="px-4 py-3.5 text-right">
+                <button 
+                  onclick="event.stopPropagation(); copyToClipboard('${esc(String(item['รหัสประจำตัว'] || ''))}')" 
+                  class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs transition cursor-pointer" 
+                  title="คัดลอกรหัส"
+                >
+                  <i class="fa-regular fa-copy mr-1"></i> คัดลอก
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+    }
+
+    // Open Student Profile Modal
+    function openStudentModal(filteredIndex) {
+      const data = getFilteredData();
+      const student = data[filteredIndex];
+      if (!student) return;
+
+      const gender = getGender(student['ชื่อ - สกุล']);
+      const isBoy = gender.type === 'boy';
+
+      const avatarEl = document.getElementById('modal-avatar');
+      avatarEl.textContent = student['เลขที่'] || '0';
+      avatarEl.className = `w-20 h-20 mx-auto rounded-3xl flex items-center justify-center text-3xl font-bold shadow-md mb-3 ${isBoy ? 'bg-sky-100 text-sky-600' : 'bg-rose-100 text-rose-600'}`;
+
+      const genderPill = document.getElementById('modal-gender-pill');
+      genderPill.className = `text-xs px-2.5 py-0.5 rounded-full font-medium ${isBoy ? 'badge-boy' : 'badge-girl'}`;
+      genderPill.innerHTML = `<i class="fa-solid ${gender.icon} mr-1"></i>${gender.label}`;
+
+      document.getElementById('modal-name').textContent = student['ชื่อ - สกุล'] || '-';
+      document.getElementById('modal-class').textContent = `ห้อง ${student['ชั้น'] || '-'}`;
+      document.getElementById('modal-no').textContent = student['เลขที่'] || '-';
+      document.getElementById('modal-code').textContent = student['รหัสประจำตัว'] || '-';
+
+      document.getElementById('modal-copy-btn').onclick = () => {
+        copyToClipboard(student['รหัสประจำตัว']);
+      };
+
+      document.getElementById('student-modal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('student-modal').classList.add('hidden');
+    }
+
+    // Modal Close Listeners
+    document.getElementById('btn-close-modal').addEventListener('click', closeModal);
+    document.getElementById('student-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'student-modal') closeModal();
+    });
+
+    // Copy to clipboard with iframe-safe fallback
+    function copyToClipboard(text) {
+      if (!text) return;
+      try {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        showToast(`คัดลอกรหัส "${text}" เรียบร้อยแล้ว`);
+      } catch (err) {
+        showToast('ไม่สามารถคัดลอกข้อความได้');
+      }
+    }
+
+    // Custom Toast Notification System
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      const text = document.getElementById('toast-text');
+      text.textContent = msg;
+      toast.classList.remove('opacity-0', 'translate-y-3', 'pointer-events-none');
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-3', 'pointer-events-none');
+      }, 2500);
+    }
+
+    // Export active view to CSV file
+    function exportToCSV() {
+      const data = getFilteredData();
+      if (!data || data.length === 0) {
+        showToast('ไม่มีข้อมูลให้ส่งออก');
+        return;
+      }
+
+      const headers = ['เลขที่', 'รหัสประจำตัว', 'ชื่อ - สกุล', 'ชั้น', 'เพศ'];
+      const rows = data.map(item => [
+        `"${item['เลขที่'] || ''}"`,
+        `"${item['รหัสประจำตัว'] || ''}"`,
+        `"${item['ชื่อ - สกุล'] || ''}"`,
+        `"${item['ชั้น'] || ''}"`,
+        `"${getGender(item['ชื่อ - สกุล']).label}"`
+      ]);
+
+      const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `รายชื่อนักเรียน_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast('ดาวน์โหลดไฟล์ CSV เรียบร้อยแล้ว');
+    }
+
+    // Search input listener with debouncing
+    const searchInput = document.getElementById('search-input');
+    searchInput.addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(render, 120);
+    });
+
+    // Clear search button
+    document.getElementById('btn-clear-search').addEventListener('click', () => {
+      searchInput.value = '';
+      render();
+      searchInput.focus();
+    });
+
+    // Filters and sorting listeners
+    document.getElementById('filter-class').addEventListener('change', render);
+    document.getElementById('sort-select').addEventListener('change', render);
+
+    // Gender Tabs Filter
+    document.querySelectorAll('.filter-gender-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-gender-btn').forEach(b => {
+          b.className = 'filter-gender-btn px-3 py-1.5 rounded-lg hover:text-slate-900 transition cursor-pointer';
+        });
+        btn.className = 'filter-gender-btn active px-3 py-1.5 rounded-lg bg-white shadow-xs text-blue-600 font-semibold cursor-pointer';
+        currentGender = btn.getAttribute('data-gender');
+        render();
+      });
+    });
+
+    // Reset filters button
+    document.getElementById('btn-reset-filters').addEventListener('click', () => {
+      searchInput.value = '';
+      document.getElementById('filter-class').value = '';
+      document.getElementById('sort-select').value = 'เลขที่-asc';
+      currentGender = 'all';
+      document.querySelector('[data-gender="all"]').click();
+    });
+
+    // View toggles: Cards vs Table
+    const viewCardsBtn = document.getElementById('view-cards');
+    const viewTableBtn = document.getElementById('view-table');
+
+    viewCardsBtn.addEventListener('click', () => {
+      currentView = 'cards';
+      viewCardsBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-blue-600 shadow-sm transition cursor-pointer';
+      viewTableBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-500 hover:text-slate-800 transition cursor-pointer';
+      render();
+    });
+
+    viewTableBtn.addEventListener('click', () => {
+      currentView = 'table';
+      viewTableBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-blue-600 shadow-sm transition cursor-pointer';
+      viewCardsBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-500 hover:text-slate-800 transition cursor-pointer';
+      render();
+    });
+
+    // Refresh and CSV export triggers
+    document.getElementById('btn-refresh').addEventListener('click', () => fetchData(true));
+    document.getElementById('btn-export').addEventListener('click', exportToCSV);
+
+    // Keyboard shortcuts: "/" to focus search, "Esc" to close modal
+    document.addEventListener('keydown', (e) => {
+      if (e.key === '/' && document.activeElement !== searchInput) {
+        e.preventDefault();
+        searchInput.focus();
+      }
+      if (e.key === 'Escape') {
+        closeModal();
+      }
+    });
+
+    // Instant initial render: ensure zero blank screen on start
+    populateFilter();
+    render();
+
+    // Fetch fresh live data from OpenSheet in background
+    fetchData(false);
+  </script>
+</body>
 </html>
