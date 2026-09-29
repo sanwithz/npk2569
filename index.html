@@ -139,7 +139,7 @@
       <!-- Classes -->
       <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-sm flex items-center justify-between">
         <div>
-          <p class="text-[11px] sm:text-xs font-medium text-slate-400 uppercase tracking-wider">ระดับชั้น</p>
+          <p class="text-[11px] sm:text-xs font-medium text-slate-400 uppercase tracking-wider">ห้องเรียน</p>
           <h3 id="stat-classes" class="text-2xl sm:text-3xl font-bold text-indigo-600 mt-1">0</h3>
         </div>
         <div class="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg">
@@ -199,7 +199,7 @@
           <!-- Class selector -->
           <div class="relative min-w-[130px]">
             <select id="filter-class" class="w-full appearance-none pl-3 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
-              <option value="">ทุกระดับชั้น</option>
+              <option value="">ทุกห้องเรียน</option>
             </select>
             <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none"></i>
           </div>
@@ -211,6 +211,8 @@
               <option value="เลขที่-desc">เลขที่ มาก - 1</option>
               <option value="ชื่อ - สกุล-asc">ชื่อ ก - ฮ</option>
               <option value="ชื่อ - สกุล-desc">ชื่อ ฮ - ก</option>
+              <option value="ชั้น-asc">ห้องเรียน น้อย → มาก</option>
+              <option value="ชั้น-desc">ห้องเรียน มาก → น้อย</option>
               <option value="รหัสประจำตัว-asc">รหัสประจำตัว ↑</option>
             </select>
             <i class="fa-solid fa-arrow-down-wide-short absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none"></i>
@@ -398,7 +400,11 @@
       const keys = Object.keys(row);
       const findVal = (keywords) => {
         for (const kw of keywords) {
-          const k = keys.find(key => key.trim().toLowerCase().includes(kw.toLowerCase()));
+          const k = keys.find(key => {
+            const cleanKey = key.trim().toLowerCase();
+            const target = kw.toLowerCase();
+            return cleanKey === target || cleanKey.includes(target);
+          });
           if (k && row[k] !== undefined && row[k] !== null && String(row[k]).trim() !== '') {
             return String(row[k]).trim();
           }
@@ -409,7 +415,31 @@
       const no = findVal(['เลขที่', 'ลำดับ', 'no', 'number']) || String(row['เลขที่'] ?? '');
       const code = findVal(['รหัสประจำตัว', 'รหัสนักเรียน', 'รหัส', 'code', 'id']) || String(row['รหัสประจำตัว'] ?? '');
       const name = findVal(['ชื่อ - สกุล', 'ชื่อ-สกุล', 'ชื่อ - นามสกุล', 'ชื่อ-นามสกุล', 'ชื่อ สกุล', 'ชื่อ', 'name']) || String(row['ชื่อ - สกุล'] ?? '');
-      const room = findVal(['ชั้น', 'ห้อง', 'ห้องเรียน', 'class', 'room']) || String(row['ชั้น'] ?? '');
+      
+      // Parse and combine Class & Room into "ม.{Class}/{Room}" (e.g. ม.1/2)
+      let room = '';
+      const rawClass = findVal(['class', 'ระดับชั้น', 'ชั้น', 'grade', 'level']);
+      const rawRoom = findVal(['room', 'ห้องเรียน', 'ห้อง', 'section']);
+
+      if (rawClass && rawRoom) {
+        // Strip existing "ม." prefix if already present and clean room slash/prefix
+        const cleanClass = rawClass.replace(/^(มัธยมศึกษาปีที่|ม\.|ม\s+)/i, '').trim();
+        const cleanRoom = rawRoom.replace(/^(\/|ห้อง\s*)/i, '').trim();
+        room = `ม.${cleanClass}/${cleanRoom}`;
+      } else {
+        // Fallback for single combined field (e.g. "ม.1/2" or "1/2")
+        const singleVal = rawClass || rawRoom || findVal(['ชั้น/ห้อง', 'ห้อง/ชั้น', 'class_room', 'room_class']) || String(row['ชั้น'] ?? '');
+        if (singleVal) {
+          const s = singleVal.trim();
+          if (/^\d+\/\d+$/.test(s)) {
+            room = `ม.${s}`;
+          } else if (/^ม\s*\d+\/\d+$/.test(s)) {
+            room = s.replace(/^ม\s*/, 'ม.');
+          } else {
+            room = s;
+          }
+        }
+      }
 
       if (!name && !code && !no) return null;
 
@@ -588,11 +618,11 @@
     }
 
     function populateFilter() {
-      const classes = [...new Set(allData.map(d => String(d['ชั้น'] || '').trim()).filter(Boolean))].sort();
+      const classes = [...new Set(allData.map(d => String(d['ชั้น'] || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'th', { numeric: true }));
       const sel = document.getElementById('filter-class');
       const currentVal = sel.value;
 
-      sel.innerHTML = '<option value="">ทุกระดับชั้น</option>' + 
+      sel.innerHTML = '<option value="">ทุกห้องเรียน</option>' + 
         classes.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
 
       if (classes.includes(currentVal)) {
